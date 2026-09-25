@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로봇 관제 대시보드</title>
+<meta name="description" content="현장 로봇 18대를 MQTT로 관제하는 웹 대시보드 — 문제와 해결">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+
+<section class="slide"><div class="card cover">
+  <div class="kicker">Project 01 · Robot Fleet Control</div>
+  <h1>로봇 관제 대시보드</h1>
+  <p class="lead">현장 로봇 18대의 상태를 실시간으로 받고, 이동·정지·루틴 명령을 내리는 웹 관제입니다. 현장에서 운영 중입니다.</p>
+  <div class="stats">
+    <div class="stat"><b>18대</b><span>로봇 · 9종 · 4개 구역</span></div>
+    <div class="stat"><b>704개</b><span>서버 테스트</span></div>
+    <div class="stat"><b>11.4초→0ms</b><span>지도 조작 멈춤</span></div>
+  </div>
+  <div class="stack"><span>React 19</span><span>FastAPI</span><span>MQTT over WebSocket</span><span>WebRTC</span><span>Nginx</span><span>Docker Compose</span><span>Kotlin · Wear OS</span></div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">한눈에</div>
+  <h2>무엇을 만들었나</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box"><b>관제</b><p>MQTT 로 상태를 받아 지도 위에 로봇 위치·배터리·작업을 띄웁니다.</p></div>
+      <div class="box"><b>명령</b><p>이동·정지·루틴 명령과 ACK 추적 · 재전송 · 「미배달」 경고.</p></div>
+      <div class="box"><b>권한</b><p>3단계 권한 + 제어권 lease — 한 로봇을 한 사람만 조종합니다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box"><b>이력</b><p>로봇별 일일 가동 타임라인과 하루 합계.</p></div>
+      <div class="box"><b>현장 도구</b><p>로봇 호출 워치 앱(Wear OS) · 오프라인 설치본.</p></div>
+      <div class="box"><b>영상</b><p>로봇 카메라를 WebRTC(WHEP)로 봅니다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">화면</div>
+  <h2>로봇 이력 — 하루 가동 타임라인</h2>
+  <div class="shot"><img src="img/robot-history.png" alt="로봇별 하루 가동 타임라인과 합계"><p>관제 메인(현장 평면도)은 보안상 싣지 않았습니다.</p></div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 성능</div>
+  <h2>지도 레이어 하나 끄는 데 화면이 11초 멈췄다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>경로 레이어를 끄면 11.4초, 맵 에디터 마커 클릭마다 13초 멈춤.</p></div>
+      <div class="box"><b>원인</b><p>그리는 비용은 0.4초. 조작마다 선 968개를 하나씩 떼는 루프가 8~11초를 먹었다.</p></div>
+      <div class="box fix"><b>해결</b><p>레이어는 한 번만 만들고 보이기/숨기기만 바꾼다. 에디터는 바뀐 부분만, 대량 생성은 12ms 프레임 예산으로 나눴다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">13.4초 → 0ms<small>마커 클릭</small></p>
+      <p class="big">13.7초 → 62ms<small>드래그</small></p>
+      <p class="big">14.2초 → 3.7초<small>로딩 중 멈춤</small></p>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 신뢰성</div>
+  <h2>취소를 눌렀는데 로봇이 다시 출발했다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>취소해도 대기열이 안 풀려 「이동 중」이 남고, 멀쩡한 로봇에 「미배달」 경고.</p></div>
+      <div class="box"><b>원인</b><p>ACK 대기 칸이 로봇당 하나 — 늦게 온 이동 ACK 가 취소의 추적을 지웠다. 로봇은 최대 10초 뒤 ACK, 재시도 창은 7초.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>해결</b><p>추적을 로봇 × 명령별로 나누고, 취소·정지가 나가면 이전 명령 재발행을 끊는다. 무응답은 큐를 지우지 않고 「미배달」로 사람에게 넘긴다. 이동만 재시도 창 15.5초.</p></div>
+      <div class="box res"><b>결과</b><p>회귀 테스트 4 → 25건. 끊김·거부가 조용히 사라지지 않고 경고로 드러난다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 동시성</div>
+  <h2>먼 길을 가던 로봇의 작업이 도중에 끊겼다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>긴 이동 중 제어권이 자동 만료되고, 탭을 닫으면 락이 남았다.</p></div>
+      <div class="box"><b>원인</b><p>클라이언트 타이머 4개가 제각각 만료를 판정했다.</p></div>
+      <div class="box fix"><b>해결</b><p>만료 판정을 서버의 순수 함수 하나로(연결 30초 · 활동 180초). 3초 폴링이 생존 신호를 겸하고, 로봇이 움직이는 동안은 활동으로 친다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">타이머 4 → 1<small>제어권 lease 모델</small></p>
+      <div class="box res"><b>결과</b><p>오래된 락 지적 2건이 구조적으로 사라졌고, 강제 회수·계정별 권한을 이 위에 올렸다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 운영</div>
+  <h2>빌드가 깨져도 「DEPLOY OK」</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>빌드 실패·백엔드 미기동에도 배포 로그엔 성공.</p></div>
+      <div class="box"><b>원인</b><p>가짜 신호 셋 — 파이프 끝 로그 함수의 종료 코드(항상 0), 백엔드가 죽어도 200 인 정적 페이지, 서버마다 다른 컨테이너 이름 규칙.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>해결</b><p>빌드는 compose 실제 종료 코드로, 배포는 nginx 를 거친 헬스 체크(최대 60초 폴링)로, 컨테이너는 라벨로 판정.</p></div>
+      <div class="box res"><b>결과</b><p>빌드 실패와 영구 502 가 FAILED 로 잡힌다. 「진짜 신호로 판정한다」가 프로젝트 규약이 됐다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 품질 · 영상</div>
+  <h2>AI 코드 감사와 영상 지연</h2>
+  <div class="case">
+    <div class="col">
+      <p class="big">40건 중 6건 반증<small>AI 멀티에이전트 코드 감사</small></p>
+      <div class="box fix"><b>방법</b><p>보안·동시성·정확성 등 8개 축 병렬 탐지 → 발견마다 독립 에이전트가 반증 → 어느 축도 안 본 곳을 훑는다.</p></div>
+      <div class="box res"><b>결과</b><p>확정 25건. 스테이징이 실로봇과 같은 브로커를 쓰던 치명적 문제를 찾았다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">HLS 17초 지연<small>로봇 카메라 영상 → WebRTC 로 전환</small></p>
+      <div class="box"><b>원인</b><p>RTMP 직접 수신 약 2초, 웹 HLS 약 17초 — 세그먼트 버퍼가 지연을 쌓았다.</p></div>
+      <div class="box fix"><b>해결</b><p>HLS 를 빼고 WebRTC(WHEP)로 전환.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">구조</div>
+  <h2>레이어 구조</h2>
+  <div class="layers">
+    <div class="layer"><div class="n">UI</div><div>관제 지도 · 맵 에디터 · 이력 · 관리 (React)</div></div>
+    <div class="arrow">↓ MQTT over WebSocket (상태) · REST (명령 · 태스크 · 제어권)</div>
+    <div class="layer"><div class="n">Edge</div><div>Nginx — 정적 / API / MQTT 프록시</div></div>
+    <div class="layer"><div class="n">API</div><div>FastAPI 라우터 + 3단계 권한 게이트</div></div>
+    <div class="layer"><div class="n">도메인</div><div>태스크 배정 · 제어권 lease · ACK 재전송 · 가동률</div></div>
+    <div class="layer"><div class="n">장치 게이트웨이</div><div>바이너리 패킷 파싱 → 공유 상태 · CSV 로그</div></div>
+    <div class="arrow">↓ MQTT</div>
+    <div class="layer"><div class="n">현장</div><div>브로커 → 로봇 · 영상(RTMP → WebRTC) · 워치 호출</div></div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<nav class="bar" aria-label="슬라이드"><a href="./">목차</a><button class="prev" aria-label="이전">←</button><span class="pos"></span><button class="next" aria-label="다음">→</button><a href="agri.html">농업 관제</a></nav>
+<script src="deck.js"></script>
+</body>
+</html>

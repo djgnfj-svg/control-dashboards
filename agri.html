@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>농업 관제 대시보드</title>
+<meta name="description" content="과원 필지 단위 작업판단 — 공공데이터와 로봇 라이다를 한 화면에">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+
+<section class="slide"><div class="card cover">
+  <div class="kicker">Project 02 · Orchard Decision Support</div>
+  <h1>농업 관제 — 과원 작업판단</h1>
+  <p class="lead">필지 하나를 고르면 기상청·팜맵 공공데이터와 로봇이 라이다로 스캔한 작업 맵을 한 화면에 모읍니다. 실데이터만 보여 주고, 없으면 「기록 없음」으로 둡니다.</p>
+  <div class="stats">
+    <div class="stat"><b>368MB→6MB</b><span>라이다 3,067만 → 85만 점</span></div>
+    <div class="stat"><b>0.4m</b><span>로봇·라이다 좌표 정합</span></div>
+    <div class="stat"><b>10개</b><span>화면 수치 원본 대조</span></div>
+  </div>
+  <div class="stack"><span>Vanilla JS</span><span>Leaflet</span><span>three.js</span><span>FastAPI</span><span>httpx</span><span>numpy · pyproj</span><span>Docker Compose</span></div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">화면</div>
+  <h2>필지 선택 → 라이다 작업 맵 · 주행 경로 · 필지 정보</h2>
+  <div class="shot"><img src="img/agri-main.png" alt="필지를 고르면 로봇 라이다 작업 맵과 주행 경로, 필지 정보가 한 화면에 뜬다"><p>지도 색은 라이다로 잰 지면 위 높이, 주황은 로봇 주행 경로입니다. 위치 정보는 가렸습니다.</p></div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 데이터</div>
+  <h2>368MB 라이다를 브라우저에 올리기</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>원본 30,672,451점 · 368MB — 지도와 3D 보기에 올릴 수 없고, 로봇 좌표(UTM)와 라이다 좌표도 어긋났다.</p></div>
+      <div class="box"><b>원인</b><p>원본 해상도 그대로. 라이다는 UTM 과 축은 같고 원점이 다른 로컬 좌표.</p></div>
+      <div class="box fix"><b>해결</b><p>0.25m 복셀 평균으로 점을 줄이고, 주행 경로가 나무 열 사이를 지나도록 FFT 상관으로 이동값을 찾았다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">3,067만 → 85만 점<small>368MB → 6.0MB</small></p>
+      <div class="box res"><b>결과</b><p>회전을 ±1.5° 흔들어도 정합 0.4m 이내, 원본과의 비율 오차 0.29% 이내.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 정확성</div>
+  <h2>로봇 경로가 필지 밖으로 밀려 보였다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>경로 노드 53개 중 18개가 필지 밖. 면적도 실제보다 작게(5,690㎡ vs 5,720㎡).</p></div>
+      <div class="box"><b>원인</b><p>면적은 1도당 거리를 고정값으로 쓴 탓. 어긋남은 코드가 아니었다 — 위성영상과 대조하니 로봇이 맞고, 연속지적도가 밀려 있었다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">15.6m<small>지적도가 밀린 거리</small></p>
+      <div class="box fix"><b>해결</b><p>면적을 위도별 자오선·평행권 길이로 계산, 화면 수치 10개를 원본 API 와 독립 계산으로 대조한 표를 남겼다.</p></div>
+      <div class="box res"><b>결과</b><p>면적이 측지 정확값과 일치, 나머지 9개도 일치 확인.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 보안 · 배포</div>
+  <h2>인증키 노출과 남의 서비스워커</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>브라우저에서 기상청·팜맵 API 를 부르면 인증키가 그대로 노출된다.</p></div>
+      <div class="box fix"><b>해결</b><p>중계 서버가 키를 서버 비밀값으로만 붙인다. 신청한 6개 경로·허용 출처만 통과, 느린 팜맵은 긴 제한시간·재시도.</p></div>
+      <div class="box res"><b>결과</b><p>키가 공개 코드에서 빠졌다. 해외 CDN 간헐 끊김을 확인하고 국내 서버 중계로 옮겼다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>배포해도 옛 목업이 떴다. 캐시 버전을 올려도 소용없었다.</p></div>
+      <div class="box"><b>원인</b><p>같은 출처 루트의 다른 사이트 서비스워커가 출처 전체를 「캐시 우선」으로 가로챘다.</p></div>
+      <div class="box fix"><b>해결</b><p>이 경로에만 걸리는 좁은 범위 서비스워커로 루트 것을 이기고, 버전값은 배포 스크립트가 올린다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">원칙</div>
+  <h2>진짜와 가짜가 섞인 데모 — 목업 전면 제거</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>가짜 농지·가짜 기상 수치·근거 없는 적합도 점수가 섞여 무엇이 진짜인지 알 수 없었다.</p></div>
+      <div class="box fix"><b>해결</b><p>목업을 모두 지우고 실제 API 가 붙은 것만 표시. 예보 지역은 필지 주소로 정한다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box"><b>공공 API 함정</b><p>결측값 -998.9 · JSON 대신 XML 로 오는 「자료 없음」 · 중복 기록을 처리했다.</p></div>
+      <div class="box res"><b>결과</b><p>「실제 데이터만 표시」가 프로젝트 원칙이 됐다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">구조</div>
+  <h2>레이어 구조</h2>
+  <div class="layers">
+    <div class="layer"><div class="n">UI</div><div>필지 목록 · 상세 · 지도 · 3D 포인트클라우드</div></div>
+    <div class="layer"><div class="n">데이터 접근</div><div>응답 정규화 · TTL 캐시 · 위경도 → 기상청 격자 변환</div></div>
+    <div class="arrow">↓ /api</div>
+    <div class="layer"><div class="n">API 중계</div><div>경로 화이트리스트 · 출처 검사 · 서버 측 키 주입</div></div>
+    <div class="layer"><div class="n">외부</div><div>기상청 · 팜맵 · 지적도 · GFS</div></div>
+    <div class="arrow">↑ 오프라인 전처리</div>
+    <div class="layer"><div class="n">로봇 데이터</div><div>라이다 PCD + 웨이포인트 → 높이맵 · 양자화 포인트</div></div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<nav class="bar" aria-label="슬라이드"><a href="./">목차</a><button class="prev" aria-label="이전">←</button><span class="pos"></span><button class="next" aria-label="다음">→</button><a href="robot.html">로봇 관제</a></nav>
+<script src="deck.js"></script>
+</body>
+</html>
