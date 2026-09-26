@@ -18,7 +18,7 @@
   <div class="stats">
     <div class="stat"><b>18대</b><span>로봇 · 9종 · 4개 구역</span></div>
     <div class="stat"><b>704개</b><span>서버 테스트</span></div>
-    <div class="stat"><b>11.4초→0ms</b><span>지도 조작 멈춤</span></div>
+    <div class="stat"><b>11.4초→0.13초</b><span>지도 레이어 끄기 멈춤</span></div>
   </div>
   <div class="stack"><span>React 19</span><span>FastAPI</span><span>MQTT over WebSocket</span><span>WebRTC</span><span>Nginx</span><span>Docker Compose</span><span>Kotlin · Wear OS</span></div>
   <span class="no"></span>
@@ -59,7 +59,7 @@
       <div class="box fix"><b>해결</b><p>레이어는 한 번만 만들고 보이기/숨기기만 바꾼다. 에디터는 바뀐 부분만, 대량 생성은 12ms 프레임 예산으로 나눴다.</p></div>
     </div>
     <div class="col">
-      <p class="big">13.4초 → 0ms<small>마커 클릭</small></p>
+      <p class="big">13.4초 → 50ms 미만<small>마커 클릭 — 50ms 넘는 멈춤이 사라졌다</small></p>
       <p class="big">13.7초 → 62ms<small>드래그</small></p>
       <p class="big">14.2초 → 3.7초<small>로딩 중 멈춤</small></p>
     </div>
