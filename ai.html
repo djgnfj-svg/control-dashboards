@@ -187,6 +187,23 @@
 </div></section>
 
 <section class="slide"><div class="card">
+  <div class="kicker">프로토타입 · LLM 로봇 조작</div>
+  <h2>「1번 창고A 갔다가 조립라인으로」를 관제 명령으로</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box"><b>무엇</b><p>현업 관제와 같은 MQTT 바이너리 프로토콜(MOVE_POS · STOP · RUN_ROUTINE · 상태 DATA3)에 LLM 자연어 조작을 붙였다. 모의 로봇 3대에서 동작을 확인했다. 현장 IP·도면은 싣지 않았다.</p></div>
+      <div class="box fix"><b>설계</b><p>LLM 은 장소 이름만 고르고 좌표를 모른다. 좌표 · 연결 · 배터리 확인과 명령 발행은 관제 층 코드가 하고, 명령 뒤 3초 안에 텔레메트리가 안 바뀌면 성공이 아니라 「미배달」.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">시나리오 6/6<small>상태 조회 · 순차 이동 · 순회 · 정지 · 거부 두 건</small></p>
+      <div class="box res"><b>안전 규칙은 코드가 건다</b><p>저전압(20.8V) 로봇을 검사실로 보내라는 지시는 거부되고 이유가 운영자에게 그대로 전달된다. 지도에 없는 「옥상」은 실행 없이 되묻는다.</p></div>
+      <p class="big">3~14초<small>지시 하나 처리(도착 대기 포함)</small></p>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
   <div class="kicker">정리</div>
   <h2>에이전트를 쓰며 굳힌 원칙 셋</h2>
   <div class="case">
