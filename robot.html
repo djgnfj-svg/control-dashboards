@@ -26,7 +26,7 @@
 <section class="slide"><div class="card">
   <div class="kicker">한눈에</div>
   <h2>관제에서 푼 것</h2>
-  <div class="caps"><a href="#5"><b>텔레메트리 · 이기종 통합</b><span>바이너리 스키마 파서</span><i>5</i></a><a href="#7"><b>태스크 할당 · 미션 상태</b><span>두 층 큐 · 상태머신</span><i>7</i></a><a href="#8"><b>명령 ACK</b><span>로봇 × 명령 재전송</span><i>8</i></a><a href="#9"><b>대량 지도 렌더링</b><span>참조 비교 증분 갱신</span><i>9</i></a><a href="#12"><b>현장 배포</b><span>Dropbox · systemd</span><i>12</i></a><a href="#13"><b>개발 체계</b><span>AI 하네스</span><i>13</i></a></div>
+  <div class="caps"><a href="#5"><b>텔레메트리 · 이기종 통합</b><span>바이너리 스키마 파서</span><i>5</i></a><a href="#8"><b>태스크 할당 · 미션 상태</b><span>두 층 큐 · 상태머신</span><i>8</i></a><a href="#12"><b>명령 ACK</b><span>로봇 × 명령 재전송</span><i>12</i></a><a href="#15"><b>대량 지도 렌더링</b><span>참조 비교 증분 갱신</span><i>15</i></a><a href="#19"><b>현장 배포</b><span>Dropbox · systemd</span><i>19</i></a><a href="#21"><b>개발 체계</b><span>AI 하네스</span><i>21</i></a></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -75,15 +75,184 @@
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
+  <div class="kicker">경력 ① 이기종 통합 · 깊이</div>
+  <h2>설정을 재시작 없이 — 락 없는 빠른 길</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="parsers.py">_parsers_lock = threading.Lock()
+
+def _build_mappings():
+    global _cmd_set, _type_cmd_packet, _type_fields, _parsers_mtime
+    current_mtime = (config_loader._config_mtime, config_loader._pcmds_mtime)
+    if _type_fields is not None and current_mtime == _parsers_mtime:
+        return
+    with _parsers_lock:
+        # double-check: lock 획득 사이에 다른 스레드가 이미 빌드했을 수 있음
+        if _type_fields is not None and current_mtime == _parsers_mtime:
+            return
+        type_fields = {}
+        for type_name, config in get_robot_types().items():
+            fields = _resolve_fields(type_name, robot_types)   # fields_ref
+            type_fields[type_name] = fields
+            if fields:
+                _sanity_check_fields(type_name, fields, config[&#x27;packet_size&#x27;])
+        # 완성된 dict를 한 번에 교체 (빈 dict가 노출되지 않음)
+        _type_fields = type_fields
+        _parsers_mtime = current_mtime</pre></div><div class="desc"><div><b>누가 부르나</b><ul><li>MQTT 수신 스레드와 API 스레드가 패킷마다 동시에</li></ul></div><div><b>빠른 길</b><ul><li>mtime 이 같으면 락 없이 반환 — 패킷 경로에 락 경합이 없다</li></ul></div><div><b>바뀌었을 때</b><ul><li>락 안에서 한 번 더 확인 — 두 스레드가 같이 빌드하지 않게</li><li>새 dict 를 다 만든 뒤 참조만 교체 — 읽는 쪽은 반쯤 빈 매핑을 못 본다</li></ul></div><div><b>결과</b><ul><li>관리 화면에서 스키마를 저장하면 다음 패킷부터 반영, 재시작 없음</li></ul></div><div><b>기동</b><ul><li>warm_up() 이 먼저 돌려 필드 끝 ≠ packet_size 를 로그로 잡는다</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
   <div class="kicker">경력 ④ 태스크 할당</div>
   <h2>두 층 큐</h2><p class="cite">접수 순서로만 돌던 태스크 큐를 배정·로봇별 발행 두 층으로 나누고 우선순위를 넣어, 평소엔 FIFO를 유지하고 긴급 미션만 앞세우도록 구현</p>
   <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 440" role="img" aria-label="미배정 풀과 로봇별 큐 두 층으로 나뉜 태스크 큐와 배정 제외 조건, 1초 틱"><defs><marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="10" width="310" height="66" rx="9"/><text x="24" y="36" class="t">REST</text><text x="24" y="58" class="s">/api/tasks · priority 기본 5</text><path class="ln" d="M165,76 V92" marker-end="url(#b1)"/><rect class="b k" x="10" y="96" width="310" height="66" rx="9"/><text x="24" y="122" class="t">미배정 풀</text><text x="24" y="144" class="s">현장(MOS)별 · 우선순위 → 도착 순</text><path class="ln" d="M165,162 V178" marker-end="url(#b1)"/><rect class="b" x="10" y="182" width="310" height="66" rx="9"/><text x="24" y="208" class="t">배정</text><text x="24" y="230" class="s">풀 머리 하나 → 가장 가까운 로봇</text><path class="ln" d="M165,248 V264" marker-end="url(#b1)"/><rect class="b k" x="10" y="268" width="310" height="66" rx="9"/><text x="24" y="294" class="t">로봇별 큐</text><text x="24" y="316" class="s">우선순위 → 도착 순 · 머리만</text><path class="ln" d="M165,334 V350" marker-end="url(#b1)"/><rect class="b" x="10" y="354" width="310" height="66" rx="9"/><text x="24" y="380" class="t">발행</text><text x="24" y="402" class="s">ACK 대기 등록 → MOS{n}</text><rect class="b" x="345" y="150" width="205" height="128" rx="9"/><text x="359" y="176" class="t">배정 제외</text><text x="359" y="198" class="s">제어권 쥔 로봇</text><text x="359" y="215" class="s">30초 소식 없음</text><text x="359" y="232" class="s">FATAL 에러</text><text x="359" y="249" class="s">목표에 닿을 수 없음</text><text x="359" y="266" class="s">미등록 · 위치 모름</text><path class="ln" d="M345,215 H324" marker-end="url(#b1)"/><rect class="b k" x="345" y="300" width="205" height="128" rx="9"/><text x="359" y="326" class="t">1초 틱</text><text x="359" y="348" class="s">뮤텍스 안 —</text><text x="359" y="365" class="s">만료 정리 → 회수</text><text x="359" y="382" class="s">→ 배정 → 발행 선정</text><text x="359" y="399" class="s">뮤텍스 밖 —</text><text x="359" y="416" class="s">감사 · 발행 · 재전송</text></svg></div></div><div class="desc"><div><b>문제</b><ul><li>접수 순서 큐 하나 — 고장 · 갈 수 없는 로봇에도 배정</li><li>급한 일을 앞세울 길이 없음</li></ul></div><div><b>설계</b><ul><li>무엇을 할지(현장별 풀)와 누가 할지(로봇별 큐)를 두 층으로</li></ul></div><div><b>구현</b><ul><li>가까운 가용 로봇에 배정, 다섯 조건은 뺀다</li><li>안정 삽입 정렬 — 같은 우선순위는 도착 순, 실행 중인 일은 안 밀린다</li><li>1초 틱이 만료 · 배정 · 발행을 뮤텍스 안에서, 네트워크 발행은 밖에서</li></ul></div><div><b>결과</b><ul><li>평소엔 FIFO 그대로 · 우선순위는 API 로 열어 둠</li><li>큐 · 상태 · ACK 테스트 134</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 태스크 할당 · 깊이</div>
+  <h2>배정 — 사본과 등록 확인</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="tasks.py">def try_allocate(store, mos, locks, positions, robot_mos,
+                 online_ids=None, errors=None, reachable=None,
+                 registered_ids=None):
+    bucket = store.unassigned.get(mos)
+    if not bucket:
+        return None
+    head = bucket[0]
+    tx, ty = float(head.params.get(&quot;x&quot;, 0.0)), float(head.params.get(&quot;y&quot;, 0.0))
+    node_index = head.params.get(&quot;node_index&quot;)
+    candidate_ids = [rid for rid, m in robot_mos.items()
+                     if m == mos and (registered_ids is None
+                                      or rid in registered_ids)]
+    chosen = _pick_nearest_available(tx, ty, candidate_ids, locks, positions,
+                                     online_ids=online_ids, errors=errors,
+                                     node_index=node_index, reachable=reachable)
+    if chosen is None:
+        return None
+    bucket.pop(0)
+    return head, chosen</pre></div><div class="desc"><div><b>머리 하나만</b><ul><li>풀 머리(최우선)만 본다 — 못 주면 뒤 태스크도 기다려 순서가 지켜진다</li></ul></div><div><b>사본</b><ul><li>robot_mos 는 MQTT 스레드가 갱신한다</li><li>원본을 돌면 dictionary changed size during iteration — 틱 시작에 뜬 사본을 넘긴다</li></ul></div><div><b>등록 확인</b><ul><li>robot_mos 는 받은 패킷이 남긴 기록이라 등록을 지워도 남는다</li><li>빼지 않으면 화면에 없는, STOP 을 누를 수 없는 로봇에 명령이 나간다</li></ul></div><div><b>후보</b><ul><li>제어권 · 오프라인 · FATAL · 도달 불가(CSV 노드 집합) 를 빼고 가장 가까운 로봇</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 태스크 할당 · 깊이</div>
+  <h2>1초 틱 — 락 안에서 결정, 밖에서 발행</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="routes/tasks.py">def tick_tasks() -&gt; None:
+    positions = _snapshot_positions()
+    online = _online_ids(now)
+    errors = _snapshot_errors()
+    to_publish = []    # (robot_id, task_id, cmd_type, params, ...)
+    closed_after = []  # (Task, status, reason, robot_id) — mutex 밖 audit
+
+    with mutex:
+        # 1) lock 사라진 로봇 큐 회수
+        for rid in list(TASK_STORE.by_robot.keys()):
+            if TASK_STORE.active(rid) and locks.get(rid) is None:
+                for t in TASK_STORE.cancel_all_for_robot(rid):
+                    closed_after.append((t, &quot;FAILED&quot;, &quot;lock_lost&quot;, rid))
+        # 2) 할당 타임아웃  3) 만료 회수  4) 배정  5) 디스패치
+        ...
+            to_publish.append((rid, task.task_id, task.cmd_type, task.params, ...))
+
+    # mutex 밖: audit + publish
+    for t, status, reason, rid in closed_after:
+        _close(t, status, reason, robot_id=rid)
+    for rid, task_id, cmd_type, params, username, tracked in to_publish:
+        try:
+            _state[&quot;publish&quot;](_pub_topic(rid),
+                              build_command_packet(cmd_type, params, get_cmd, rid))
+        except Exception:
+            with mutex:
+                t = TASK_STORE.find(task_id)   # 실패 → 되돌린다</pre></div><div class="desc"><div><b>두 단계</b><ul><li>락 안에서는 상태 전이만 정하고 목록에 담는다</li><li>감사 기록 · MQTT 발행은 락을 놓은 뒤</li></ul></div><div><b>까닭</b><ul><li>브로커나 디스크가 느려도 제어권 · API 요청이 같은 락에 묶여 멈추지 않게</li></ul></div><div><b>입력은 사본</b><ul><li>위치 · 온라인 · 에러를 틱 시작에 떠서 판단 중에 바뀌지 않는다</li></ul></div><div><b>실패</b><ul><li>발행이 실패하면 락을 다시 잡고 그 태스크를 되돌린다</li></ul></div><div><b>만료는 완료가 아니다</b><ul><li>도착 확인 없이 제어권만 끊긴 것 — FAILED(lock_lost) 로 닫는다</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
   <div class="kicker">경력 ④ 태스크 할당 · 구현</div>
   <h2>상태머신 · 명령 ACK</h2>
   <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 410" role="img" aria-label="WAITING, RUNNING, DONE, FAILED, CANCELED 다섯 상태와 전이"><defs><marker id="b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b k" x="20" y="180" width="130" height="56" rx="9"/><text x="34" y="206" class="t">WAITING</text><rect class="b k" x="215" y="180" width="130" height="56" rx="9"/><text x="229" y="206" class="t">RUNNING</text><rect class="b" x="415" y="50" width="135" height="56" rx="9"/><text x="429" y="76" class="t">DONE</text><rect class="b" x="415" y="180" width="135" height="56" rx="9"/><text x="429" y="206" class="t">FAILED</text><rect class="b" x="415" y="330" width="135" height="56" rx="9"/><text x="429" y="356" class="t">CANCELED</text><path class="ln" d="M150,208 H211" marker-end="url(#b2)"/><text x="162" y="200" class="s">발행</text><path class="ln" d="M280,180 V78 H411" marker-end="url(#b2)"/><text x="290" y="68" class="s">도착 0→1 · AR 응답</text><path class="ln" d="M345,208 H411" marker-end="url(#b2)"/><text x="347" y="200" class="s">제어권 잃음</text><path class="ln" d="M280,236 V280 H85 V240" marker-end="url(#b2)"/><text x="110" y="300" class="s">경로 에러 · 일시정지</text><path class="ln" d="M85,236 V358 H411" marker-end="url(#b2)"/><text x="300" y="350" class="s">취소</text></svg></div></div><div class="desc"><div><b>상태</b><ul><li>진행 둘 + 닫힘 셋 · 닫힌 기록은 500개까지</li></ul></div><div><b>ACK</b><ul><li>추적 키를 로봇 → 로봇 × 명령으로</li><li>늦게 온 이동 ACK 가 취소 추적을 지워 취소한 로봇이 다시 출발하던 문제를 없앴다</li></ul></div><div><b>재전송</b><ul><li>1.5초 유예 뒤 최대 5회 · 이동은 14회</li><li>STOP · 취소가 나가면 다른 재전송을 끊는다</li></ul></div><div><b>포기</b><ul><li>큐를 지우지 않고 「미배달」 경고로 사람에게</li></ul></div><div><b>제어권</b><ul><li>lock_expired() 하나로 판정 — 연결 30초 · 활동 180초, 움직이는 동안은 활동</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 명령 ACK · 깊이</div>
+  <h2>취소는 지우지 않고 멈춘다</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="ack_retry.py">SUPERSEDING_NAMES = (&#x27;CANCEL&#x27;, &#x27;STOP&#x27;)
+
+def register_pending(robot_id, topic, payload, intent=None, task_id=None,
+                     actor=None, session_id=None, supersede=None):
+    if not payload or payload[0] not in _ack_tracked_cmds():
+        return
+    cmd = payload[0]
+    if supersede is None:
+        supersede = cmd in _superseding_cmds()
+    with state.CMD_ACK_MUTEX:
+        by_cmd = state.ROBOT_ACK_PENDING.setdefault(robot_id, {})
+        if supersede:
+            for other, e in by_cmd.items():
+                if other == cmd or e.get(&#x27;gave_up&#x27;):
+                    continue
+                e[&#x27;gave_up&#x27;] = True
+                e[&#x27;gave_up_at&#x27;] = now.isoformat()
+        by_cmd[cmd] = {
+            &#x27;topic&#x27;: topic, &#x27;payload&#x27;: payload, &#x27;cmd&#x27;: cmd,
+            &#x27;intent&#x27;: intent, &#x27;task_id&#x27;: task_id, &#x27;session_id&#x27;: session_id,
+            &#x27;retries&#x27;: 0,
+            &#x27;max_retries&#x27;: MAX_RETRIES_LONG if cmd in _long_wait_cmds()
+                           else MAX_RETRIES,
+            &#x27;gave_up&#x27;: False, &#x27;gave_up_at&#x27;: None,
+        }</pre></div><div class="desc"><div><b>키</b><ul><li>로봇 × 명령 — 늦게 온 이동 ACK 가 취소의 추적을 덮어쓰지 못한다</li></ul></div><div><b>취소 · 정지</b><ul><li>같은 로봇의 다른 재전송을 멈춘다 — 안 멈추면 묵은 MOVE_POS 가 다시 나가 멈춘 로봇이 재출발</li></ul></div><div><b>지우지 않는 까닭</b><ul><li>항목의 intent 가 CANCEL_ACK 를 받았을 때 큐를 정리하는 근거 — 지우면 취소 직후 정지에서 큐가 RUNNING 으로 남는다</li></ul></div><div><b>락 순서</b><ul><li>발행 경로는 LOCK_MUTEX 를 놓고 CMD_ACK_MUTEX 를 잡는다 — 미배달 알림은 CMD_ACK_MUTEX 를 놓은 뒤 불러 역전 데드락을 막는다</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 명령 ACK · 깊이</div>
+  <h2>재전송 상수마다 까닭이 있다</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="ack_retry.py">RETRY_GRACE_SECONDS = 1.5
+MAX_RETRIES = 5
+MAX_RETRIES_LONG = 14        # MOVE_POS · RUN_ROUTINE
+GIVE_UP_KEEP_SECONDS = 60
+
+def retry_tick(publish_fn) -&gt; None:
+    with state.CMD_ACK_MUTEX:
+        for robot_id, by_cmd in list(state.ROBOT_ACK_PENDING.items()):
+            for cmd, pending in list(by_cmd.items()):
+                if pending.get(&#x27;gave_up&#x27;):
+                    since = pending.get(&#x27;gave_up_at&#x27;) or pending[&#x27;sent_at&#x27;]
+                    if (now - datetime.fromisoformat(since)).total_seconds() \
+                            &gt;= GIVE_UP_KEEP_SECONDS:
+                        del by_cmd[cmd]
+                    continue
+                age = (now - datetime.fromisoformat(pending[&#x27;sent_at&#x27;])).total_seconds()
+                if age &lt; RETRY_GRACE_SECONDS:
+                    continue
+                if pending[&#x27;retries&#x27;] &gt;= pending[&#x27;max_retries&#x27;]:
+                    pending[&#x27;gave_up&#x27;] = True
+                    pending[&#x27;gave_up_at&#x27;] = now.isoformat()
+                    gave_up.append((robot_id, dict(pending)))
+                    continue
+                pending[&#x27;retries&#x27;] += 1
+                to_retry.append((robot_id, pending[&#x27;topic&#x27;], pending[&#x27;payload&#x27;], cmd))
+    # 락 밖: to_retry 재발행이 먼저, gave_up 미배달 알림은 뒤에</pre></div><div class="desc"><div><b>1.5초 유예</b><ul><li>tick_tasks 직후 같은 반복에서 돈다 — 유예가 없으면 방금 보낸 명령을 수 ms 뒤 또 쏜다</li></ul></div><div><b>5회 상한</b><ul><li>오프라인 로봇에 묵은 명령을 쏘다 재접속 때 뒤늦게 실행되는 사고를 막는다</li></ul></div><div><b>이동 14회</b><ul><li>로봇은 출발까지 최대 10초 기다린 뒤 ACK — 유실까지 감안해 약 15.5초에 포기</li></ul></div><div><b>60초 보존</b><ul><li>포기 시각부터 잰다 — 무선이 느려 늦게 온 CANCEL_ACK 도 intent 를 찾는다</li></ul></div><div><b>순서</b><ul><li>재전송을 먼저, 미배달 알림(감사 로그)은 뒤에 — 한 로봇의 I/O 가 다른 로봇 재전송을 늦추지 않게</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 제어권 · 깊이</div>
+  <h2>만료 정책은 순수 함수 하나</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="tasks.py">def lock_expired(lock: dict, now: datetime) -&gt; bool:
+    if not lock:
+        return False
+    if lock.get(&quot;source&quot;) == &quot;user_call&quot;:
+        return is_idle(lock, now)
+    # manual 연결 기준 시각: 폴링(last_seen) &gt; 승격(promoted_at) &gt; 획득(acquired_at)
+    if lock.get(&quot;last_seen&quot;):
+        conn_at, conn_limit = lock[&quot;last_seen&quot;], MANUAL_CONN_TIMEOUT_SECONDS
+    elif lock.get(&quot;promoted_at&quot;):
+        conn_at, conn_limit = lock[&quot;promoted_at&quot;], ARRIVAL_HOLD_SECONDS
+    else:
+        conn_at, conn_limit = lock.get(&quot;acquired_at&quot;), MANUAL_CONN_TIMEOUT_SECONDS
+    if conn_at and (now - datetime.fromisoformat(conn_at)).total_seconds() &gt; conn_limit:
+        return True
+    cands = []
+    for k in (&quot;last_command_at&quot;, &quot;last_robot_active_at&quot;, &quot;last_queue_hold_at&quot;):
+        v = lock.get(k)
+        if v:
+            cands.append(datetime.fromisoformat(v))
+    if cands and (now - max(cands)).total_seconds() &gt; MANUAL_IDLE_TIMEOUT_SECONDS:
+        return True
+    return False</pre></div><div class="desc"><div><b>단일 정본</b><ul><li>클라이언트 타이머 넷이 따로 내던 판정을 서버 함수 하나로 — 요청 경로와 1초 틱이 같은 함수를 부른다</li></ul></div><div><b>두 갈래</b><ul><li>워치 호출: 폴링하는 사람이 없어 활동성만</li><li>수동: 연결(30초) 또는 활동(180초)</li></ul></div><div><b>기준 시각 순서</b><ul><li>폴링 > 승격 > 획득 — 승격을 건너뛰면 30초 넘게 달린 호출이 도착하자마자 만료된다</li></ul></div><div><b>신호 구분</b><ul><li>텔레메트리는 활동 신호일 뿐 연결 신호가 아니다</li></ul></div><div><b>테스트</b><ul><li>시각을 인자로 받는 순수 함수라 시간을 넣어 검증한다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -119,6 +288,38 @@
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
+  <div class="kicker">경력 ② 맵 에디터 · 깊이</div>
+  <h2>프레임 예산 + 세대 토큰</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="GPSEditorMapView.jsx">const BUILD_SYNC_THRESHOLD = 200;
+const BUILD_FRAME_BUDGET_MS = 12;
+const pumpBuildQueue = () =&gt; {
+  buildScheduledRef.current = false;
+  const q = buildQueueRef.current;
+  const deadline = performance.now() + BUILD_FRAME_BUDGET_MS;
+  while (q.length &amp;&amp; performance.now() &lt; deadline) q.shift()();
+  if (q.length &amp;&amp; !buildScheduledRef.current) {
+    buildScheduledRef.current = true;
+    requestAnimationFrame(pumpBuildQueue);
+  }
+};
+
+// waypoint effect
+const { added, removed, updated } =
+  diffByKey(prevWaypointsRef.current, waypoints, r =&gt; r.nodeIndex);
+const gen = ++wpGenRef.current;
+removed.forEach(destroyWpMarker);
+const toCreate = [...updated, ...added];
+if (toCreate.length &lt;= BUILD_SYNC_THRESHOLD) {
+  toCreate.forEach(createWpMarker);
+} else {
+  enqueueBuild(toCreate.map(wp =&gt; () =&gt; {
+    if (gen !== wpGenRef.current || markersRef.current.has(wp.nodeIndex)) return;
+    createWpMarker(wp);
+  }));
+}</pre></div><div class="desc"><div><b>200개 이하</b><ul><li>그 자리에서 만든다 — 평소 편집은 즉시</li></ul></div><div><b>넘으면</b><ul><li>프레임마다 12ms 만 쓰고 다음 프레임으로 — 16.7ms 프레임 안에 입력 · 그리기 여유를 남긴다</li></ul></div><div><b>세대 토큰</b><ul><li>생성 도중 데이터가 바뀌면 effect 가 다시 돌며 세대를 올린다 — 옛 작업은 스스로 빠져 유령 · 중복 마커가 없다</li></ul></div><div><b>안전장치</b><ul><li>레지스트리에 이미 있으면 건너뛴다</li><li>언마운트 때 남은 큐를 버린다</li><li>큐가 비면 마커 수와 데이터를 대조해 어긋나면 경고</li></ul></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
   <div class="kicker">경력 ③ 라이다 3D 맵</div>
   <h2>줄이고 맞추기</h2><p class="cite">원점이 달라 어긋나던 라이다 점군과 주행 경로를 자동 정합해 3,067만 점을 85만 점으로 줄인 브라우저 3D 맵 구현</p>
   <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 400" role="img" aria-label="라이다 점군을 줄이고 정합해 브라우저 3D 로 보내는 흐름"><defs><marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="10" width="540" height="70" rx="9"/><text x="24" y="36" class="t">라이다 PCD</text><text x="24" y="58" class="s">3,067만 점 · 368MB</text><path class="ln" d="M280,80 V106" marker-end="url(#d1)"/><rect class="b k" x="10" y="110" width="540" height="70" rx="9"/><text x="24" y="136" class="t">복셀 평균</text><text x="24" y="158" class="s">0.25m 격자</text><path class="ln" d="M280,180 V206" marker-end="url(#d1)"/><rect class="b k" x="10" y="210" width="540" height="70" rx="9"/><text x="24" y="236" class="t">FFT 상관 정합</text><text x="24" y="258" class="s">주행 경로가 나무 열 사이로</text><path class="ln" d="M280,280 V306" marker-end="url(#d1)"/><rect class="b" x="10" y="310" width="540" height="70" rx="9"/><text x="24" y="336" class="t">브라우저 3D</text><text x="24" y="358" class="s">85만 점 · 6MB</text></svg></div></div><div class="desc"><div><b>문제</b><ul><li>368MB 점군은 브라우저에 못 올린다</li><li>라이다는 UTM 과 축은 같고 원점만 달라 경로와 어긋남</li></ul></div><div><b>설계</b><ul><li>무거운 계산은 오프라인 · 브라우저엔 결과만</li></ul></div><div><b>구현</b><ul><li>0.25m 복셀 평균으로 점을 줄인다</li><li>주행 경로가 나무 열 사이를 지나도록 FFT 상관으로 이동값을 찾는다</li></ul></div><div><b>결과</b><ul><li>85만 점 · 6MB</li><li>정합 0.4m 이내 — 회전을 ±1.5° 흔들어도</li></ul></div><div><b>자세히</b><ul><li><a href="agri.html#4">농업 관제 · 라이다 파이프라인 →</a></li></ul></div></div></div>
@@ -131,15 +332,39 @@
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
-  <div class="kicker">경력 ⑥ AI 개발 하네스</div>
-  <h2>누가 고쳐도 같은 길</h2><p class="cite">연구원분들이 관제 코드를 변경해도 일관성을 유지하도록 AI 하네스 구성</p>
-  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 440" role="img" aria-label="brainstorm, plan, implement, review, 스테이징, verify, wrap, 프로덕션 여덟 걸음"><defs><marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="8" width="400" height="42" rx="9"/><text x="24" y="35.0" class="t">brainstorm</text><text x="160" y="34.0" class="s">접근 2~3개 · 사람이 고름</text><path class="ln" d="M210,50 V60" marker-end="url(#f1)"/><rect class="b k" x="10" y="62" width="400" height="42" rx="9"/><text x="24" y="89.0" class="t">plan</text><text x="160" y="88.0" class="s">코드부터 읽고 질문 → 기획 문서</text><path class="ln" d="M210,104 V114" marker-end="url(#f1)"/><rect class="b" x="10" y="116" width="400" height="42" rx="9"/><text x="24" y="143.0" class="t">implement</text><text x="160" y="142.0" class="s">작은 건 메인 · 큰 건 에이전트</text><path class="ln" d="M210,158 V168" marker-end="url(#f1)"/><rect class="b k" x="10" y="170" width="400" height="42" rx="9"/><text x="24" y="197.0" class="t">review</text><text x="160" y="196.0" class="s">쓴 쪽과 다른 에이전트</text><path class="ln" d="M210,212 V222" marker-end="url(#f1)"/><rect class="b" x="10" y="224" width="400" height="42" rx="9"/><text x="24" y="251.0" class="t">스테이징</text><text x="160" y="250.0" class="s">자동 배포 · 헬스 체크</text><path class="ln" d="M210,266 V276" marker-end="url(#f1)"/><rect class="b" x="10" y="278" width="400" height="42" rx="9"/><text x="24" y="305.0" class="t">verify</text><text x="160" y="304.0" class="s">admin 으로 보기만</text><path class="ln" d="M210,320 V330" marker-end="url(#f1)"/><rect class="b" x="10" y="332" width="400" height="42" rx="9"/><text x="24" y="359.0" class="t">wrap</text><text x="160" y="358.0" class="s">정본 문서 ↔ 코드 → 커밋</text><path class="ln" d="M210,374 V384" marker-end="url(#f1)"/><rect class="b" x="10" y="386" width="400" height="42" rx="9"/><text x="24" y="413.0" class="t">프로덕션</text><text x="160" y="412.0" class="s">사람이 승인</text><path class="ln" d="M422,12 H432 V100 H422"/><text x="442" y="61.0" class="r">사람과 정한다</text><path class="ln" d="M422,120 H432 V208 H422"/><text x="442" y="169.0" class="r">쓰기 ≠ 보기</text><path class="ln" d="M422,228 H432 V316 H422"/><text x="442" y="277.0" class="r">현장에서 본다</text><path class="ln" d="M422,336 H432 V424 H422"/><text x="442" y="385.0" class="r">기록 · 승인</text></svg></div></div><div class="desc"><div><b>문제</b><ul><li>연구원도 AI 로 고치게 열자 무엇을 왜 바꿨는지 추적이 안 됨</li></ul></div><div><b>설계</b><ul><li>정할 것은 사람과 · 쓰는 쪽과 보는 쪽은 다른 에이전트</li><li>규약은 CLAUDE.md 하나 — 구현 · 리뷰가 같이 읽는다</li></ul></div><div><b>구현</b><ul><li>1파일 · UI 는 메인 / 3파일+ · 안전 경계 · MQTT 는 implementer</li><li>리뷰는 correctness 기본, 제어 경로 · 인증이 닿으면 둘 더 — 메인의 결론은 안 넘긴다</li><li>편집마다 eslint · ruff 훅 · verify 는 명령 버튼 금지</li></ul></div><div><b>재서 고침</b><ul><li>리뷰 토큰 −39% · 감사 40건 → 25건 확정</li><li>기획 단계를 뺐다가 결과가 엇나가 되살렸다</li></ul></div></div></div>
+  <div class="kicker">경력 ⑤ 현장 배포 · 깊이</div>
+  <h2>가짜 성공 신호 셋을 진짜로</h2>
+  <div class="ad"><div class="adl"><pre class="code" data-lang="auto-deploy.sh">compose_container() {
+    docker ps -a \
+        --filter &quot;label=com.docker.compose.project=$1&quot; \
+        --filter &quot;label=com.docker.compose.service=$2&quot; \
+        --format &quot;{{.Names}}&quot; | head -1
+}
+
+$DOCKER_COMPOSE -p robot-control -f docker-compose.production.yml \
+    up -d --build 2&gt;&amp;1 | vlog
+if [ &quot;${PIPESTATUS[0]}&quot; -eq 0 ]; then
+    log &quot;[PROD]   [2/2] Build &amp; start OK&quot;
+else
+    log &quot;[PROD] &gt;&gt;&gt; DEPLOY FAILED&quot;
+    container=$(compose_container robot-control api_server all)
+    [[ -n &quot;$container&quot; ]] &amp;&amp; capture_failed_log &quot;prod&quot; &quot;$container&quot; &quot;Deploy build failed&quot;
+    return 1
+fi
+
+# api_server 준비될 때까지 최대 60초 폴링
+for _ in $(seq 1 30); do
+    http_code=$(curl -s -o /dev/null -w &quot;%{http_code}&quot; \
+                http://localhost:80/api/health)
+    [ &quot;$http_code&quot; = &quot;200&quot; ] &amp;&amp; break
+    sleep 2
+done</pre></div><div class="desc"><div><b>가짜 ① 종료 코드</b><ul><li>| vlog 파이프의 종료 코드는 로그 함수 것이라 늘 0 — PIPESTATUS[0] 로 compose 의 코드를 본다</li></ul></div><div><b>가짜 ② 헬스</b><ul><li>정적 페이지는 백엔드가 죽어도 200 — Nginx 가 넘기는 /api/health 를 찔러 죽으면 502</li></ul></div><div><b>가짜 ③ 컨테이너</b><ul><li>서버마다 이름 규칙이 달랐다 — compose 라벨로 찾는다</li></ul></div><div><b>폴링</b><ul><li>sleep 5 단발 → 2초 × 30 — 느린 기동(MQTT 연결 · CSV 로드)에 오히려 관대</li></ul></div><div><b>실패하면</b><ul><li>컨테이너 로그를 남겨 다음 사람이 바로 본다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
-  <div class="kicker">화면</div>
-  <h2>이력 — 로봇별 하루 가동 타임라인</h2>
-  <div class="shot"><a href="img/robot-history.png" target="_blank" class="zoom"><img src="img/robot-history.png" alt="로봇별 하루 가동 타임라인과 합계"></a></div>
+  <div class="kicker">경력 ⑥ AI 개발 하네스</div>
+  <h2>누가 고쳐도 같은 길</h2><p class="cite">연구원분들이 관제 코드를 변경해도 일관성을 유지하도록 AI 하네스 구성</p>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 440" role="img" aria-label="brainstorm, plan, implement, review, 스테이징, verify, wrap, 프로덕션 여덟 걸음"><defs><marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="8" width="400" height="42" rx="9"/><text x="24" y="35.0" class="t">brainstorm</text><text x="160" y="34.0" class="s">접근 2~3개 · 사람이 고름</text><path class="ln" d="M210,50 V60" marker-end="url(#f1)"/><rect class="b k" x="10" y="62" width="400" height="42" rx="9"/><text x="24" y="89.0" class="t">plan</text><text x="160" y="88.0" class="s">코드부터 읽고 질문 → 기획 문서</text><path class="ln" d="M210,104 V114" marker-end="url(#f1)"/><rect class="b" x="10" y="116" width="400" height="42" rx="9"/><text x="24" y="143.0" class="t">implement</text><text x="160" y="142.0" class="s">작은 건 메인 · 큰 건 에이전트</text><path class="ln" d="M210,158 V168" marker-end="url(#f1)"/><rect class="b k" x="10" y="170" width="400" height="42" rx="9"/><text x="24" y="197.0" class="t">review</text><text x="160" y="196.0" class="s">쓴 쪽과 다른 에이전트</text><path class="ln" d="M210,212 V222" marker-end="url(#f1)"/><rect class="b" x="10" y="224" width="400" height="42" rx="9"/><text x="24" y="251.0" class="t">스테이징</text><text x="160" y="250.0" class="s">자동 배포 · 헬스 체크</text><path class="ln" d="M210,266 V276" marker-end="url(#f1)"/><rect class="b" x="10" y="278" width="400" height="42" rx="9"/><text x="24" y="305.0" class="t">verify</text><text x="160" y="304.0" class="s">admin 으로 보기만</text><path class="ln" d="M210,320 V330" marker-end="url(#f1)"/><rect class="b" x="10" y="332" width="400" height="42" rx="9"/><text x="24" y="359.0" class="t">wrap</text><text x="160" y="358.0" class="s">정본 문서 ↔ 코드 → 커밋</text><path class="ln" d="M210,374 V384" marker-end="url(#f1)"/><rect class="b" x="10" y="386" width="400" height="42" rx="9"/><text x="24" y="413.0" class="t">프로덕션</text><text x="160" y="412.0" class="s">사람이 승인</text><path class="ln" d="M422,12 H432 V100 H422"/><text x="442" y="61.0" class="r">사람과 정한다</text><path class="ln" d="M422,120 H432 V208 H422"/><text x="442" y="169.0" class="r">쓰기 ≠ 보기</text><path class="ln" d="M422,228 H432 V316 H422"/><text x="442" y="277.0" class="r">현장에서 본다</text><path class="ln" d="M422,336 H432 V424 H422"/><text x="442" y="385.0" class="r">기록 · 승인</text></svg></div></div><div class="desc"><div><b>문제</b><ul><li>연구원도 AI 로 고치게 열자 무엇을 왜 바꿨는지 추적이 안 됨</li></ul></div><div><b>설계</b><ul><li>정할 것은 사람과 · 쓰는 쪽과 보는 쪽은 다른 에이전트</li><li>규약은 CLAUDE.md 하나 — 구현 · 리뷰가 같이 읽는다</li></ul></div><div><b>구현</b><ul><li>1파일 · UI 는 메인 / 3파일+ · 안전 경계 · MQTT 는 implementer</li><li>리뷰는 correctness 기본, 제어 경로 · 인증이 닿으면 둘 더 — 메인의 결론은 안 넘긴다</li><li>편집마다 eslint · ruff 훅 · verify 는 명령 버튼 금지</li></ul></div><div><b>재서 고침</b><ul><li>리뷰 토큰 −39% · 감사 40건 → 25건 확정</li><li>기획 단계를 뺐다가 결과가 엇나가 되살렸다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 
