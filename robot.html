@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>로봇 관제 대시보드</title>
-<meta name="description" content="이기종 현장 로봇을 브라우저로 관제하는 웹 시스템 — 아키텍처">
+<meta name="description" content="이기종 현장 로봇 웹 관제 — 아키텍처와 구현">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="deck.css">
@@ -14,16 +14,21 @@
 <section class="slide"><div class="card cover">
   <div class="kicker">Project 01 · Robot Fleet Control</div>
   <h1>로봇 관제 대시보드</h1>
-  <p class="lead">이기종 현장 로봇을 브라우저로 관제하는 웹 시스템 · 설계부터 운영까지 1인</p>
+  <p class="lead">이기종 현장 로봇 웹 관제를 0에서 지어 운영 · 설계부터 배포까지 1인</p>
   <div class="stats">
     <div class="stat"><b>9종 18대</b><span>실물 9 · 가상 9 · 현장 4곳</span></div>
-    <div class="stat"><b>13초→186ms</b><span>맵 에디터 조작</span></div>
-    <div class="stat"><b>704</b><span>서버 테스트</span></div>
+    <div class="stat"><b>737</b><span>서버 테스트</span></div>
+    <div class="stat"><b>926</b><span>커밋 · 9개월</span></div>
   </div>
   <div class="stack"><span>React 19</span><span>FastAPI</span><span>MQTT</span><span>WebRTC · MediaMTX</span><span>Nginx</span><span>Docker Compose</span><span>systemd</span><span>Kotlin · Wear OS</span><span>Claude Code</span></div>
   <span class="no"></span>
 </div></section>
-
+<section class="slide"><div class="card">
+  <div class="kicker">한눈에</div>
+  <h2>관제에서 푼 것</h2>
+  <div class="caps"><a href="#5"><b>텔레메트리 · 이기종 통합</b><span>바이너리 스키마 파서</span><i>5</i></a><a href="#7"><b>태스크 할당 · 미션 상태</b><span>두 층 큐 · 상태머신</span><i>7</i></a><a href="#8"><b>명령 ACK</b><span>로봇 × 명령 재전송</span><i>8</i></a><a href="#9"><b>대량 지도 렌더링</b><span>참조 비교 증분 갱신</span><i>9</i></a><a href="#12"><b>현장 배포</b><span>Dropbox · systemd</span><i>12</i></a><a href="#13"><b>개발 체계</b><span>AI 하네스 · 감사</span><i>13</i></a></div>
+  <span class="no"></span>
+</div></section>
 <section class="slide"><div class="card">
   <div class="kicker">화면</div>
   <h2>관제</h2>
@@ -33,87 +38,128 @@
 <section class="slide"><div class="card">
   <div class="kicker">아키텍처</div>
   <h2>시스템</h2>
-  <div class="diagram"><svg viewBox="0 0 1000 440" role="img" aria-label="브라우저와 워치가 Nginx 를 거쳐 MQTT 브로커, FastAPI, MediaMTX 로 이어지는 구조도"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="40" width="170" height="100" rx="10"/><text x="24" y="68" class="t">브라우저</text><text x="24" y="92" class="s">React</text><text x="24" y="112" class="s">robots.json 스키마로</text><text x="24" y="132" class="s">바이너리 직접 해석</text><rect class="b" x="10" y="300" width="170" height="70" rx="10"/><text x="24" y="328" class="t">워치</text><text x="24" y="352" class="s">Wear OS · REST</text><rect class="b k" x="250" y="20" width="140" height="400" rx="10"/><text x="264" y="50" class="t">Nginx</text><text x="264" y="70" class="s">Cloudflare Tunnel</text><text x="264" y="100" class="r">/mqtt</text><text x="264" y="225" class="r">/api</text><text x="264" y="385" class="r">/live</text><text x="264" y="300" class="s">/ 정적</text><path class="ln" d="M180,95 H246" marker-end="url(#ah)"/><path class="ln" d="M180,335 H214 V220 H246" marker-end="url(#ah)"/><rect class="b" x="460" y="150" width="270" height="170" rx="10"/><text x="474" y="178" class="t">FastAPI</text><text x="474" y="202" class="s">REST · 3단계 권한 · 현장별</text><text x="474" y="222" class="s">MQTT 구독 · 같은 스키마로 해석</text><text x="474" y="242" class="s">태스크 큐 · 1초 틱</text><text x="474" y="262" class="s">공유 상태 · 메모리 + 뮤텍스</text><path class="ln" d="M390,220 H456" marker-end="url(#ah)"/><text x="404" y="212" class="s">REST</text><rect class="b" x="460" y="355" width="270" height="60" rx="10"/><text x="474" y="383" class="t">MediaMTX</text><text x="474" y="407" class="s">RTMP → WebRTC (WHEP)</text><path class="ln" d="M456,385 H394" marker-end="url(#ah)"/><text x="400" y="377" class="s">WHEP</text><rect class="b k" x="800" y="40" width="190" height="90" rx="10"/><text x="814" y="68" class="t">MQTT 브로커</text><text x="814" y="92" class="s">TCP 1883 · WS 9001</text><path class="ln" d="M390,95 H796" marker-end="url(#ah)"/><text x="420" y="85" class="s">MQTT over WebSocket · 상태 구독</text><path class="ln" d="M730,190 H850 V134" marker-end="url(#ah)" marker-start="url(#ah)"/><text x="745" y="182" class="s">구독 · 명령 발행</text><rect class="b" x="800" y="250" width="190" height="110" rx="10"/><text x="814" y="278" class="t">로봇</text><text x="814" y="302" class="s">6종 실물 + 가상 3종</text><text x="814" y="322" class="s">ROBOT{N} 상태·ACK ↑</text><text x="814" y="342" class="s">MOS{n} 명령 ↓</text><path class="ln" d="M940,134 V246" marker-end="url(#ah)" marker-start="url(#ah)"/><path class="ln" d="M800,340 H766 V385 H734" marker-end="url(#ah)"/><text x="745" y="355" class="s">RTMP</text></svg></div>
+  <div class="diagram"><svg viewBox="0 0 1000 440" role="img" aria-label="브라우저와 워치가 Nginx 를 거쳐 MQTT 브로커, FastAPI, MediaMTX 로 이어지는 구조도"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="40" width="170" height="100" rx="10"/><text x="24" y="68" class="t">브라우저</text><text x="24" y="92" class="s">React</text><text x="24" y="112" class="s">스키마로 바이너리</text><text x="24" y="132" class="s">직접 해석</text><rect class="b" x="10" y="300" width="170" height="70" rx="10"/><text x="24" y="328" class="t">워치</text><text x="24" y="352" class="s">Wear OS · REST</text><rect class="b k" x="250" y="20" width="140" height="400" rx="10"/><text x="264" y="50" class="t">Nginx</text><text x="264" y="70" class="s">Cloudflare Tunnel</text><text x="264" y="100" class="r">/mqtt</text><text x="264" y="225" class="r">/api</text><text x="264" y="385" class="r">/live</text><text x="264" y="300" class="s">/ 정적</text><path class="ln" d="M180,95 H246" marker-end="url(#ah)"/><path class="ln" d="M180,335 H214 V220 H246" marker-end="url(#ah)"/><rect class="b" x="460" y="150" width="270" height="170" rx="10"/><text x="474" y="178" class="t">FastAPI</text><text x="474" y="202" class="s">REST · 3단계 권한 · 현장별</text><text x="474" y="222" class="s">MQTT 구독 · 같은 스키마</text><text x="474" y="242" class="s">태스크 큐 · 1초 틱</text><text x="474" y="262" class="s">공유 상태 · 메모리 + 뮤텍스</text><path class="ln" d="M390,220 H456" marker-end="url(#ah)"/><text x="404" y="212" class="s">REST</text><rect class="b" x="460" y="355" width="270" height="60" rx="10"/><text x="474" y="383" class="t">MediaMTX</text><text x="474" y="407" class="s">RTMP → WebRTC (WHEP)</text><path class="ln" d="M456,385 H394" marker-end="url(#ah)"/><text x="400" y="377" class="s">WHEP</text><rect class="b k" x="800" y="40" width="190" height="90" rx="10"/><text x="814" y="68" class="t">MQTT 브로커</text><text x="814" y="92" class="s">TCP 1883 · WS 9001</text><path class="ln" d="M390,95 H796" marker-end="url(#ah)"/><text x="420" y="85" class="s">MQTT over WebSocket · 상태 구독</text><path class="ln" d="M730,190 H850 V134" marker-end="url(#ah)" marker-start="url(#ah)"/><text x="745" y="182" class="s">구독 · 명령 발행</text><rect class="b" x="800" y="250" width="190" height="110" rx="10"/><text x="814" y="278" class="t">로봇</text><text x="814" y="302" class="s">6종 실물 + 가상 3종</text><text x="814" y="322" class="s">ROBOT{N} 상태 · ACK ↑</text><text x="814" y="342" class="s">MOS{n} 명령 ↓</text><path class="ln" d="M940,134 V246" marker-end="url(#ah)" marker-start="url(#ah)"/><path class="ln" d="M800,340 H766 V385 H734" marker-end="url(#ah)"/><text x="745" y="355" class="s">RTMP</text></svg></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
-  <div class="kicker">아키텍처</div>
-  <h2>명령 파이프라인</h2>
-  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="명령이 REST, 미배정 풀, 배정, 로봇별 큐, 발행을 거쳐 로봇에 닿고 ACK 로 추적되는 흐름"><defs><marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="30" width="150" height="120" rx="10"/><text x="24" y="58" class="t">REST</text><text x="24" y="82" class="s">/api/tasks</text><text x="24" y="102" class="s">3단계 권한</text><rect class="b" x="182" y="30" width="150" height="120" rx="10"/><text x="196" y="58" class="t">미배정 풀</text><text x="196" y="82" class="s">현장(MOS)별</text><rect class="b k" x="354" y="30" width="150" height="120" rx="10"/><text x="368" y="58" class="t">배정</text><text x="368" y="82" class="s">가까운 가용 로봇</text><text x="368" y="102" class="s">도달성 · 에러 제외</text><text x="368" y="122" class="s">우선순위</text><rect class="b" x="526" y="30" width="150" height="120" rx="10"/><text x="540" y="58" class="t">로봇별 큐</text><text x="540" y="82" class="s">FIFO</text><rect class="b k" x="698" y="30" width="150" height="120" rx="10"/><text x="712" y="58" class="t">발행</text><text x="712" y="82" class="s">ACK 대기 등록 후</text><text x="712" y="102" class="s">MOS{n} 토픽</text><rect class="b" x="870" y="30" width="150" height="120" rx="10"/><text x="884" y="58" class="t">로봇</text><text x="884" y="82" class="s">robot_id 로 수신</text><path class="ln" d="M160,90 H178" marker-end="url(#ac)"/><path class="ln" d="M332,90 H350" marker-end="url(#ac)"/><path class="ln" d="M504,90 H522" marker-end="url(#ac)"/><path class="ln" d="M676,90 H694" marker-end="url(#ac)"/><path class="ln" d="M848,90 H866" marker-end="url(#ac)"/><rect class="b" x="183" y="175" width="674" height="40" rx="8"/><text x="197" y="201" class="s">1초 틱 — tick_tasks · retry_tick · 제어권 만료</text><path class="ln" d="M935,150 V246" marker-end="url(#ac)"/><rect class="b" x="790" y="250" width="220" height="120" rx="10"/><text x="804" y="278" class="t">로봇 ACK</text><text x="804" y="302" class="s">ROBOT{N} 토픽</text><rect class="b k" x="530" y="250" width="220" height="120" rx="10"/><text x="544" y="278" class="t">ack_retry</text><text x="544" y="302" class="s">로봇 × 명령별 추적</text><text x="544" y="322" class="s">1.5초 재전송 · 최대 5/14회</text><rect class="b" x="270" y="250" width="220" height="120" rx="10"/><text x="284" y="278" class="t">미배달</text><text x="284" y="302" class="s">경고만 · 큐 유지</text><text x="284" y="322" class="s">사람이 판단</text><rect class="b k" x="10" y="250" width="220" height="120" rx="10"/><text x="24" y="278" class="t">제어권 lease</text><text x="24" y="302" class="s">lock_expired() 순수 함수</text><text x="24" y="322" class="s">연결 30초 · 활동 180초</text><path class="ln" d="M790,310 H754" marker-end="url(#ac)"/><path class="ln" d="M530,310 H494" marker-end="url(#ac)"/><text x="500" y="300" class="s">포기</text></svg></div>
+  <div class="kicker">경력 ① 이기종 통합</div>
+  <h2>패킷에서 화면까지</h2><p class="cite">이기종 로봇 9종의 제각각인 데이터 포맷을 기종별 JSON 스키마 어댑터와 공용 파서로 묶어 실시간 수집 통합</p>
+  <div class="diagram"><svg viewBox="0 0 1020 410" role="img" aria-label="로봇 바이너리 패킷이 라우팅, 타입 조회, 스키마를 거쳐 서버와 브라우저에서 같은 방식으로 해석되는 구조"><defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b k" x="10" y="22" width="110" height="46" rx="6"/><text x="22" y="51" class="r">0 · cmd</text><rect class="b k" x="125" y="22" width="140" height="46" rx="6"/><text x="137" y="51" class="r">1 · robot_id</text><rect class="b k" x="270" y="22" width="130" height="46" rx="6"/><text x="282" y="51" class="r">2 · mos_id</text><rect class="b k" x="405" y="22" width="605" height="46" rx="6"/><text x="417" y="51" class="r">3 ~ · 기종별 필드  u8 · f32 · f64 · little-endian</text><text x="10" y="14" class="s">패킷 17 ~ 98바이트</text><rect class="b" x="10" y="100" width="220" height="100" rx="10"/><text x="24" y="128" class="t">ROBOT{N} 토픽</text><text x="24" y="152" class="s">로봇 → 브로커</text><rect class="b" x="270" y="100" width="220" height="100" rx="10"/><text x="284" y="128" class="t">on_message 라우팅</text><text x="284" y="152" class="s">접속 · AR · 경로 목록</text><text x="284" y="172" class="s">4바이트 = ACK · 0x64 = 상태</text><rect class="b" x="530" y="100" width="220" height="100" rx="10"/><text x="544" y="128" class="t">타입 조회</text><text x="544" y="152" class="s">robot_id → robots[].type</text><text x="544" y="172" class="s">cmd 는 교차 확인</text><rect class="b k" x="790" y="100" width="220" height="100" rx="10"/><text x="804" y="128" class="t">robots.json</text><text x="804" y="152" class="s">9종 · 필드 82개 선언</text><text x="804" y="172" class="s">mtime 캐시 · 재시작 없이</text><path class="ln" d="M230,150 H266" marker-end="url(#a1)"/><path class="ln" d="M490,150 H526" marker-end="url(#a1)"/><path class="ln" d="M750,150 H786" marker-end="url(#a1)"/><path class="ln" d="M900,200 V230 H380 V256" marker-end="url(#a1)"/><path class="ln" d="M900,230 V256" marker-end="url(#a1)"/><rect class="b k" x="270" y="260" width="350" height="100" rx="10"/><text x="284" y="288" class="t">서버 interpret()</text><text x="284" y="312" class="s">가동률 · CSV · 도착 판정 · ACK</text><text x="284" y="332" class="s">→ 큐 · 제어권 상태</text><rect class="b k" x="660" y="260" width="350" height="100" rx="10"/><text x="674" y="288" class="t">브라우저 interpret() → shape()</text><text x="674" y="312" class="s">같은 스키마 · 기종별 모양 함수</text><text x="674" y="332" class="s">→ 지도 · 패널</text><text x="10" y="395" class="s">새 필드 = JSON 한 줄 · 선언 밖 바이트는 무시 · 짧은 패킷 · 미등록 로봇은 버림</text></svg></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
-  <div class="kicker">UI · 성능</div>
-  <h2>맵 에디터 렌더링</h2>
-  <div class="diagram"><svg viewBox="0 0 1020 360" role="img" aria-label="전량 재구축에서 키 기반 증분 갱신으로 바꾼 맵 에디터 렌더링"><defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="26" class="r">Before</text><rect class="b" x="10" y="40" width="470" height="64" rx="10"/><text x="24" y="68" class="t">선택 · 드래그</text><text x="24" y="92" class="s">effect deps 에 selectedItem</text><path class="ln" d="M245,104 V126" marker-end="url(#am)"/><rect class="b" x="10" y="130" width="470" height="64" rx="10"/><text x="24" y="158" class="t">오버레이 4,800개 전량 재구축</text><text x="24" y="182" class="s">setMap(null) 루프만 8~11초</text><text x="10" y="250" class="big2">13초대</text><text x="540" y="26" class="r">After</text><rect class="b k" x="540" y="40" width="470" height="64" rx="10"/><text x="554" y="68" class="t">gpsMapDiff() — 순수 함수 · 참조 비교</text><text x="554" y="92" class="s">vitest 11개로 고정</text><path class="ln" d="M775,104 V126" marker-end="url(#am)"/><rect class="b k" x="540" y="130" width="470" height="64" rx="10"/><text x="554" y="158" class="t">키 레지스트리 — 바뀐 것만</text><text x="554" y="182" class="s">선택 = 아이콘 2개 · 드래그 = 마커 1개 + setPath</text><path class="ln" d="M775,194 V216" marker-end="url(#am)"/><rect class="b k" x="540" y="220" width="470" height="64" rx="10"/><text x="554" y="248" class="t">뷰포트 컬링 · 부착 상한 500</text><text x="554" y="272" class="s">초기 생성은 프레임 예산으로 분할</text><text x="540" y="340" class="big2">186ms 이내</text><text x="10" y="340" class="s">관제 지도 레이어 11.4초 → 0.3초</text></svg></div>
+  <div class="kicker">경력 ① 이기종 통합 · 구현</div>
+  <h2>스키마 하나, 파서 하나</h2>
+  <div class="two"><div><pre class="code" data-lang="robots.json">&quot;hunter&quot;: {
+  &quot;cmd_name&quot;: &quot;ROBOT_DATA&quot;, &quot;packet_size&quot;: 30,
+  &quot;fields&quot;: [
+    {&quot;name&quot;: &quot;mos_id&quot;,       &quot;offset&quot;: 2,  &quot;type&quot;: &quot;u8&quot;},
+    {&quot;name&quot;: &quot;pos_x&quot;,        &quot;offset&quot;: 3,  &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6},
+    {&quot;name&quot;: &quot;pos_y&quot;,        &quot;offset&quot;: 11, &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6},
+    {&quot;name&quot;: &quot;yaw&quot;,          &quot;offset&quot;: 19, &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 2},
+    {&quot;name&quot;: &quot;goal_arrived&quot;, &quot;offset&quot;: 27, &quot;type&quot;: &quot;u8&quot;},
+    {&quot;name&quot;: &quot;robot_state&quot;,  &quot;offset&quot;: 28, &quot;type&quot;: &quot;u8&quot;},
+    {&quot;name&quot;: &quot;error&quot;,        &quot;offset&quot;: 29, &quot;type&quot;: &quot;u8&quot;}
+  ]
+}</pre></div><div class="col2"><pre class="code" data-lang="parsers.py">def interpret(payload, fields):
+    out = {}
+    for f in fields:
+        t, off = f[&#x27;type&#x27;], f[&#x27;offset&#x27;]
+        if t == &#x27;u8&#x27;:
+            val = payload[off]
+        else:
+            val = struct.unpack(_TYPE_FMT[t],
+                  payload[off:off + _TYPE_SIZE[t]])[0]
+            if f.get(&#x27;int&#x27;):   val = round(val)
+            elif &#x27;round&#x27; in f: val = round(val, f[&#x27;round&#x27;])
+        out[f[&#x27;name&#x27;]] = val
+    return out</pre></div></div><div class="chips"><span>9종</span><span>필드 82개</span><span>서버 · 브라우저 같은 스키마</span><span>골든 테스트 18</span></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 태스크 할당</div>
+  <h2>두 층 큐</h2><p class="cite">접수 순서로만 돌던 태스크 큐를 배정·로봇별 발행 두 층으로 나누고 우선순위를 넣어, 평소엔 FIFO를 유지하고 긴급 미션만 앞세우도록 구현</p>
+  <div class="diagram"><svg viewBox="0 0 1020 340" role="img" aria-label="미배정 풀과 로봇별 큐 두 층으로 나뉜 태스크 큐, 배정 제외 조건, 1초 틱 순서"><defs><marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="30" width="150" height="120" rx="10"/><text x="24" y="58" class="t">REST</text><text x="24" y="82" class="s">/api/tasks</text><text x="24" y="102" class="s">priority 기본 5</text><text x="24" y="122" class="s">1 이 가장 먼저</text><rect class="b k" x="182" y="30" width="150" height="120" rx="10"/><text x="196" y="58" class="t">미배정 풀</text><text x="196" y="82" class="s">현장(MOS)별</text><text x="196" y="102" class="s">우선순위 → 도착 순</text><rect class="b k" x="354" y="30" width="150" height="120" rx="10"/><text x="368" y="58" class="t">배정</text><text x="368" y="82" class="s">풀 머리 하나</text><text x="368" y="102" class="s">가장 가까운 로봇</text><rect class="b k" x="526" y="30" width="150" height="120" rx="10"/><text x="540" y="58" class="t">로봇별 큐</text><text x="540" y="82" class="s">by_robot</text><text x="540" y="102" class="s">우선순위 → 도착 순</text><rect class="b" x="698" y="30" width="150" height="120" rx="10"/><text x="712" y="58" class="t">발행</text><text x="712" y="82" class="s">머리가 WAITING</text><text x="712" y="102" class="s">일 때만 · MOS{n}</text><rect class="b" x="870" y="30" width="150" height="120" rx="10"/><text x="884" y="58" class="t">로봇</text><text x="884" y="82" class="s">robot_id 로 수신</text><path class="ln" d="M160,90 H178" marker-end="url(#b1)"/><path class="ln" d="M332,90 H350" marker-end="url(#b1)"/><path class="ln" d="M504,90 H522" marker-end="url(#b1)"/><path class="ln" d="M676,90 H694" marker-end="url(#b1)"/><path class="ln" d="M848,90 H866" marker-end="url(#b1)"/><rect class="b" x="354" y="175" width="300" height="150" rx="10"/><text x="368" y="202" class="t">배정에서 빼는 로봇</text><text x="368" y="226" class="s">제어권을 쥔 로봇</text><text x="368" y="245" class="s">30초 넘게 소식 없는 로봇</text><text x="368" y="264" class="s">FATAL 에러 로봇</text><text x="368" y="283" class="s">목표 노드에 닿을 수 없는 로봇</text><text x="368" y="302" class="s">미등록 · 위치 모름</text><path class="ln" d="M430,150 V171" marker-end="url(#b1)"/><rect class="b" x="680" y="175" width="330" height="150" rx="10"/><text x="694" y="202" class="t">1초 틱</text><text x="694" y="226" class="s">LOCK_MUTEX 안 — 락 잃은 큐 정리</text><text x="694" y="245" class="s">→ 180초 지난 미배정 만료 → 제어권 회수</text><text x="694" y="264" class="s">→ 배정 → 발행 대상 선정</text><text x="694" y="283" class="s">뮤텍스 밖 — 감사 기록 · 발행</text><text x="694" y="302" class="s">→ ACK 재전송</text><rect class="b" x="10" y="175" width="320" height="150" rx="10"/><text x="24" y="203" class="t">두 층으로 나눈 까닭</text><text x="24" y="227" class="s">무엇을 시킬지(풀)와</text><text x="24" y="247" class="s">누가 할지(로봇별 큐)를 떼어</text><text x="24" y="267" class="s">기종이 늘어도 배정 규칙은 그대로</text><text x="24" y="287" class="s">같은 우선순위는 도착 순 = FIFO</text></svg></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ④ 태스크 할당 · 구현</div>
+  <h2>상태머신 · 우선순위 · ACK</h2>
+  <div class="two"><div><div class="diagram"><svg viewBox="0 0 580 340" role="img" aria-label="WAITING, RUNNING, DONE, FAILED, CANCELED 다섯 상태와 전이"><defs><marker id="b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b k" x="10" y="140" width="140" height="70" rx="10"/><text x="24" y="168" class="t">WAITING</text><rect class="b k" x="220" y="140" width="140" height="70" rx="10"/><text x="234" y="168" class="t">RUNNING</text><rect class="b" x="430" y="30" width="140" height="60" rx="10"/><text x="444" y="58" class="t">DONE</text><rect class="b" x="430" y="150" width="140" height="60" rx="10"/><text x="444" y="178" class="t">FAILED</text><rect class="b" x="430" y="270" width="140" height="60" rx="10"/><text x="444" y="298" class="t">CANCELED</text><path class="ln" d="M150,165 H216" marker-end="url(#b2)"/><text x="165" y="157" class="s">발행</text><path class="ln" d="M290,140 V60 H426" marker-end="url(#b2)"/><text x="220" y="50" class="s">goal_arrived 0→1 · AR 응답</text><path class="ln" d="M360,180 H426" marker-end="url(#b2)"/><text x="362" y="172" class="s">제어권 잃음</text><path class="ln" d="M290,210 V245 H80 V214" marker-end="url(#b2)"/><text x="100" y="265" class="s">경로 에러(수동) · 일시정지</text><path class="ln" d="M80,210 V300 H426" marker-end="url(#b2)"/><text x="300" y="292" class="s">취소</text></svg></div></div><div class="col2"><pre class="code" data-lang="tasks.py">def _insert_by_priority(bucket, task):
+    # 같은 우선순위는 도착 순 — 기본값만 오면 FIFO
+    i = len(bucket)
+    while i &gt; 0:
+        prev = bucket[i - 1]
+        if prev.status == &quot;RUNNING&quot; \
+           or prev.priority &lt;= task.priority:
+            break            # 실행 중인 일은 밀지 않는다
+        i -= 1
+    bucket.insert(i, task)</pre><div class="chips"><span>ACK 추적 = 로봇 × 명령</span><span>1.5초 뒤 재전송 · 5회 / 이동 14회</span><span>포기 → 미배달 경고 · 큐 유지</span><span>STOP 이 다른 재전송을 끊는다</span><span>큐 · 상태 · ACK 테스트 134</span></div></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ② 맵 에디터</div>
+  <h2>전량 재구축 → 증분 갱신</h2><p class="cite">오버레이 4,800개를 매번 다시 그리던 GPS 에디터를 증분 갱신으로 바꿔 조작 지연을 13초대에서 186ms 이내로 98% 단축</p>
+  <div class="diagram"><svg viewBox="0 0 1020 360" role="img" aria-label="전량 재구축에서 키 기반 증분 갱신으로 바꾼 맵 에디터"><defs><marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="26" class="r">Before</text><rect class="b" x="10" y="40" width="470" height="64" rx="10"/><text x="24" y="68" class="t">선택 · 드래그 · undo</text><text x="24" y="92" class="s">effect deps 에 selectedItem · undo 는 JSON 깊은 복사</text><path class="ln" d="M245,104 V126" marker-end="url(#c1)"/><rect class="b" x="10" y="130" width="470" height="64" rx="10"/><text x="24" y="158" class="t">오버레이 4,800개 전량 재구축</text><text x="24" y="182" class="s">생성 0.4초 · setMap(null) 제거 루프 8~11초</text><text x="10" y="260" class="big2">13초대</text><text x="540" y="26" class="r">After</text><rect class="b k" x="540" y="40" width="470" height="64" rx="10"/><text x="554" y="68" class="t">diffByKey() — 참조 비교 순수 함수</text><text x="554" y="92" class="s">행은 불변 갱신 · added / updated / removed</text><path class="ln" d="M775,104 V126" marker-end="url(#c1)"/><rect class="b k" x="540" y="130" width="470" height="64" rx="10"/><text x="554" y="158" class="t">키 레지스트리 — 바뀐 것만</text><text x="554" y="182" class="s">선택 = 아이콘 2개 · 드래그 = 닿은 선만 · 레이어 = setVisible</text><path class="ln" d="M775,194 V216" marker-end="url(#c1)"/><rect class="b k" x="540" y="220" width="470" height="64" rx="10"/><text x="554" y="248" class="t">200개 넘으면 프레임 예산 12ms 로 나눠 생성</text><text x="554" y="272" class="s">undo 는 참조 스냅샷 · 히스토리 50</text><text x="540" y="345" class="big2">186ms 이내</text></svg></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ② 맵 에디터 · 구현</div>
+  <h2>참조 비교 diff</h2>
+  <div class="two"><div><pre class="code" data-lang="gpsMapDiff.js">export function diffByKey(prev, next, keyFn) {
+  const prevByKey = new Map(prev.map(r =&gt; [keyFn(r), r]));
+  const nextKeys = new Set(), added = [], updated = [];
+  for (const row of next) {
+    const key = keyFn(row); nextKeys.add(key);
+    const old = prevByKey.get(key);
+    if (old === undefined) added.push(row);
+    else if (old !== row)  updated.push(row);  // 참조가 다르면 바뀐 것
+  }
+  const removed = [...prevByKey.keys()]
+    .filter(k =&gt; !nextKeys.has(k));
+  return { added, updated, removed };
+}</pre><div class="chips"><span>vitest 11</span></div></div><div class="col2"><table class="perf"><thead><tr><th>조작</th><th>전</th><th>후</th></tr></thead><tbody>
+<tr><td>마커 클릭</td><td>13.4초</td><td>0ms</td></tr>
+<tr><td>행 클릭</td><td>13.3초</td><td><b>186ms</b></td></tr>
+<tr><td>드래그</td><td>13.7초</td><td>62ms</td></tr>
+<tr><td>undo</td><td>13.6초</td><td>0ms</td></tr>
+<tr><td>관제 지도 경로 끄기</td><td>11.4초</td><td>0ms</td></tr>
+</tbody></table><p class="foot">스테이징 · longtask 측정 · 같은 절차로 전후</p></div></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ③ 라이다 3D 맵</div>
+  <h2>농업 관제에서 자세히</h2><p class="cite">원점이 달라 어긋나던 라이다 점군과 주행 경로를 자동 정합해 3,067만 점을 85만 점으로 줄인 브라우저 3D 맵 구현</p>
+  <div class="diagram"><svg viewBox="0 0 1020 130" role="img" aria-label="라이다 점군을 줄이고 정합해 브라우저 3D 로 보내는 흐름"><defs><marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="20" width="220" height="90" rx="10"/><text x="24" y="48" class="t">라이다 PCD</text><text x="24" y="72" class="s">3,067만 점 · 368MB</text><rect class="b k" x="270" y="20" width="220" height="90" rx="10"/><text x="284" y="48" class="t">복셀 평균</text><text x="284" y="72" class="s">0.25m 격자</text><rect class="b k" x="530" y="20" width="220" height="90" rx="10"/><text x="544" y="48" class="t">FFT 상관 정합</text><text x="544" y="72" class="s">원점 다른 좌표 · 0.4m</text><rect class="b" x="790" y="20" width="220" height="90" rx="10"/><text x="804" y="48" class="t">브라우저 3D</text><text x="804" y="72" class="s">85만 점 · 6MB</text><path class="ln" d="M230,65 H266" marker-end="url(#d1)"/><path class="ln" d="M490,65 H526" marker-end="url(#d1)"/><path class="ln" d="M750,65 H786" marker-end="url(#d1)"/></svg></div><p class="more"><a href="agri.html#4">농업 관제 · 라이다 파이프라인 →</a></p>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ⑤ 현장 배포</div>
+  <h2>Git 없는 서버 자동 배포</h2><p class="cite">Git이 없는 현장 서버에서 Dropbox 동기화와 systemd 파일 감시로 CD 구현</p>
+  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="Dropbox 와 systemd 로 스테이징과 프로덕션에 배포하는 파이프라인"><defs><marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="20" width="200" height="80" rx="10"/><text x="24" y="48" class="t">개발 PC</text><text x="24" y="72" class="s">현장 서버엔 Git 없음</text><path class="ln" d="M110,100 V146" marker-end="url(#e1)"/><rect class="b" x="10" y="150" width="200" height="80" rx="10"/><text x="24" y="178" class="t">Dropbox</text><text x="24" y="202" class="s">코드 동기화</text><path class="ln" d="M110,230 V276" marker-end="url(#e1)"/><rect class="b k" x="10" y="280" width="200" height="90" rx="10"/><text x="24" y="308" class="t">systemd</text><text x="24" y="332" class="s">auto-deploy.service</text><text x="24" y="352" class="s">10초마다 크래시 감시</text><path class="ln" d="M210,325 H240 V85 H266" marker-end="url(#e1)"/><path class="ln" d="M210,325 H266" marker-end="url(#e1)"/><text x="270" y="32" class="r">스테이징 :81 — 저장하면 자동</text><rect class="b" x="270" y="40" width="225" height="90" rx="10"/><text x="284" y="68" class="t">변경 감시</text><text x="284" y="92" class="s">10초마다 크기 · 시각 해시</text><text x="284" y="112" class="s">5초 디바운스</text><rect class="b" x="520" y="40" width="225" height="90" rx="10"/><text x="534" y="68" class="t">compose up --build</text><text x="534" y="92" class="s">PIPESTATUS 로 실제 종료 코드</text><rect class="b k" x="770" y="40" width="225" height="90" rx="10"/><text x="784" y="68" class="t">/api/health</text><text x="784" y="92" class="s">Nginx 경유 2초 × 30</text><text x="784" y="112" class="s">실패 → 로그 80줄 보관</text><text x="270" y="272" class="r">프로덕션 :80 — 트리거 파일로</text><rect class="b" x="270" y="280" width="225" height="90" rx="10"/><text x="284" y="308" class="t">deploy-trigger</text><text x="284" y="332" class="s">스테이징에서 잰 뒤</text><rect class="b" x="520" y="280" width="225" height="90" rx="10"/><text x="534" y="308" class="t">down → up --build</text><text x="534" y="332" class="s">빌드 동안 웹은 멈춤</text><rect class="b k" x="770" y="280" width="225" height="90" rx="10"/><text x="784" y="308" class="t">/api/health</text><text x="784" y="332" class="s">→ OK / FAILED · 트리거 삭제</text><path class="ln" d="M495,85 H516" marker-end="url(#e1)"/><path class="ln" d="M745,85 H766" marker-end="url(#e1)"/><path class="ln" d="M495,325 H516" marker-end="url(#e1)"/><path class="ln" d="M745,325 H766" marker-end="url(#e1)"/><text x="270" y="175" class="s">영상 게이트웨이는 따로 떠 있어 웹 재배포 중에도 끊기지 않는다</text><text x="270" y="200" class="s">한 호스트 · 두 환경이 브로커와 설정을 공유</text></svg></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ⑥ AI 개발 하네스</div>
+  <h2>누가 고쳐도 같은 길</h2><p class="cite">연구원분들이 관제 코드를 변경해도 일관성을 유지하도록 AI 하네스 구성</p>
+  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="brainstorm, plan, implement, review, 스테이징, verify, wrap, 프로덕션으로 이어지는 개발 하네스"><defs><marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="20" width="230" height="120" rx="10"/><text x="24" y="48" class="t">brainstorm</text><text x="24" y="72" class="s">접근 2~3개 · 사람이 고름</text><text x="24" y="92" class="s">→ 방향 블록</text><rect class="b k" x="270" y="20" width="230" height="120" rx="10"/><text x="284" y="48" class="t">plan</text><text x="284" y="72" class="s">코드부터 읽고 질문</text><text x="284" y="92" class="s">→ docs/plans 승인</text><rect class="b" x="530" y="20" width="230" height="120" rx="10"/><text x="544" y="48" class="t">implement</text><text x="544" y="72" class="s">1파일 · UI 는 메인</text><text x="544" y="92" class="s">3파일+ · 안전 경계 · MQTT</text><text x="544" y="112" class="s">→ implementer 에이전트</text><rect class="b k" x="790" y="20" width="230" height="120" rx="10"/><text x="804" y="48" class="t">review</text><text x="804" y="72" class="s">correctness 기본</text><text x="804" y="92" class="s">제어 경로 → frontend</text><text x="804" y="112" class="s">인증 · 새 모듈 → standards</text><path class="ln" d="M240,80 H266" marker-end="url(#f1)"/><path class="ln" d="M500,80 H526" marker-end="url(#f1)"/><path class="ln" d="M760,80 H786" marker-end="url(#f1)"/><path class="ln" d="M905,140 V160 H125 V176" marker-end="url(#f1)"/><text x="150" y="156" class="s">리뷰어에겐 요청 · 변경 전 상태만 — 메인의 결론은 안 넘긴다</text><rect class="b" x="10" y="180" width="230" height="120" rx="10"/><text x="24" y="208" class="t">스테이징</text><text x="24" y="232" class="s">자동 배포</text><text x="24" y="252" class="s">헬스 체크</text><rect class="b" x="270" y="180" width="230" height="120" rx="10"/><text x="284" y="208" class="t">verify</text><text x="284" y="232" class="s">admin · 1440 / 390 폭</text><text x="284" y="252" class="s">보기만 · 명령 버튼 금지</text><rect class="b" x="530" y="180" width="230" height="120" rx="10"/><text x="544" y="208" class="t">wrap</text><text x="544" y="232" class="s">정본 문서 ↔ 코드 대조</text><text x="544" y="252" class="s">→ 커밋</text><rect class="b k" x="790" y="180" width="230" height="120" rx="10"/><text x="804" y="208" class="t">프로덕션</text><text x="804" y="232" class="s">사람이 승인</text><text x="804" y="252" class="s">트리거 파일</text><path class="ln" d="M240,240 H266" marker-end="url(#f1)"/><path class="ln" d="M500,240 H526" marker-end="url(#f1)"/><path class="ln" d="M760,240 H786" marker-end="url(#f1)"/><rect class="b" x="10" y="325" width="320" height="46" rx="8"/><text x="24" y="354" class="s">CLAUDE.md 단일 정본 — 구현 · 리뷰가 같은 규약</text><rect class="b" x="350" y="325" width="320" height="46" rx="8"/><text x="364" y="354" class="s">편집마다 훅 — eslint · ruff</text><rect class="b" x="690" y="325" width="320" height="46" rx="8"/><text x="704" y="354" class="s">서버 737 · vitest 테스트</text></svg></div>
+  <span class="no"></span>
+</div></section>
+<section class="slide"><div class="card">
+  <div class="kicker">경력 ⑥ AI 개발 하네스 · 운영</div>
+  <h2>재고 고친 것</h2>
+  <div class="nums">
+  <div><p class="big">리뷰어 6 → 1<small>실측 — 구현 한 번에 에이전트 6.8개 · 기본 리뷰어 하나로</small></p></div>
+  <div><p class="big">−39%<small>리뷰 토큰 43.1k → 26.1k</small></p></div>
+  <div><p class="big">40 → 25<small>8축 병렬 감사 · 반증 에이전트로 확정</small></p></div>
+  <div><p class="big">plan 복원<small>결정을 모델에 맡기니 결과가 엇나갔다</small></p></div>
+</div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">화면</div>
   <h2>이력 — 로봇별 하루 가동 타임라인</h2>
   <div class="shot"><a href="img/robot-history.png" target="_blank" class="zoom"><img src="img/robot-history.png" alt="로봇별 하루 가동 타임라인과 합계"></a></div>
-  <span class="no"></span>
-</div></section>
-<section class="slide"><div class="card">
-  <div class="kicker">운영</div>
-  <h2>배포 파이프라인</h2>
-  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="Dropbox 와 systemd 로 스테이징과 프로덕션에 자동 배포하는 파이프라인"><defs><marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="20" width="200" height="80" rx="10"/><text x="24" y="48" class="t">개발 PC</text><text x="24" y="72" class="s">Git 없는 현장</text><path class="ln" d="M110,100 V146" marker-end="url(#ad)"/><rect class="b" x="10" y="150" width="200" height="80" rx="10"/><text x="24" y="178" class="t">Dropbox</text><text x="24" y="202" class="s">코드 동기화</text><path class="ln" d="M110,230 V276" marker-end="url(#ad)"/><rect class="b k" x="10" y="280" width="200" height="90" rx="10"/><text x="24" y="308" class="t">systemd</text><text x="24" y="332" class="s">auto-deploy.service</text><text x="24" y="352" class="s">크래시 감시</text><path class="ln" d="M210,325 H240 V85 H266" marker-end="url(#ad)"/><path class="ln" d="M210,325 H266" marker-end="url(#ad)"/><text x="270" y="32" class="r">스테이징 :81</text><rect class="b" x="270" y="40" width="225" height="90" rx="10"/><text x="284" y="68" class="t">변경 감시</text><text x="284" y="92" class="s">10초마다 내용 해시</text><text x="284" y="112" class="s">5초 안정 대기</text><rect class="b" x="520" y="40" width="225" height="90" rx="10"/><text x="534" y="68" class="t">compose up --build</text><text x="534" y="92" class="s">실제 종료 코드로 판정</text><rect class="b k" x="770" y="40" width="225" height="90" rx="10"/><text x="784" y="68" class="t">/api/health</text><text x="784" y="92" class="s">Nginx 경유 · 최대 60초</text><text x="784" y="112" class="s">→ OK / FAILED</text><text x="270" y="272" class="r">프로덕션 :80</text><rect class="b" x="270" y="280" width="225" height="90" rx="10"/><text x="284" y="308" class="t">deploy-trigger</text><text x="284" y="332" class="s">파일 하나로 반영</text><rect class="b" x="520" y="280" width="225" height="90" rx="10"/><text x="534" y="308" class="t">compose up --build</text><text x="534" y="332" class="s">실제 종료 코드로 판정</text><rect class="b k" x="770" y="280" width="225" height="90" rx="10"/><text x="784" y="308" class="t">/api/health</text><text x="784" y="332" class="s">→ OK / FAILED</text><path class="ln" d="M495,85 H516" marker-end="url(#ad)"/><path class="ln" d="M745,85 H766" marker-end="url(#ad)"/><path class="ln" d="M495,325 H516" marker-end="url(#ad)"/><path class="ln" d="M745,325 H766" marker-end="url(#ad)"/><text x="270" y="175" class="s">한 호스트에 두 환경 · 브로커 · 설정 공유</text></svg></div>
-  <span class="no"></span>
-</div></section>
-<section class="slide"><div class="card">
-  <div class="kicker">개발 아키텍처</div>
-  <h2>AI 개발 하네스</h2>
-  <div class="diagram">
-    <svg viewBox="0 0 1020 400" role="img" aria-label="아이디어, 기획, 구현, 리뷰, 스테이징, 화면 검증, 마무리, 프로덕션으로 이어지는 Claude Code 개발 하네스">
-      <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
-      <rect class="b" x="10" y="30" width="220" height="110" rx="10"/>
-      <text x="25" y="60" class="t">아이디어</text>
-      <text x="25" y="87" class="s">brainstorm</text>
-      <text x="25" y="109" class="s">접근 2~3개 중 사람이 고른다</text>
-      <rect class="b k" x="270" y="30" width="220" height="110" rx="10"/>
-      <text x="285" y="60" class="t">기획</text>
-      <text x="285" y="87" class="s">plan · 질문으로 빈칸을 채워</text>
-      <text x="285" y="109" class="s">최소 단위 기획 문서 승인</text>
-      <rect class="b" x="530" y="30" width="220" height="110" rx="10"/>
-      <text x="545" y="60" class="t">구현</text>
-      <text x="545" y="87" class="s">implement</text>
-      <text x="545" y="109" class="s">큰 변경만 implementer 에이전트</text>
-      <rect class="b k" x="790" y="30" width="220" height="110" rx="10"/>
-      <text x="805" y="60" class="t">리뷰</text>
-      <text x="805" y="87" class="s">review-correctness 기본</text>
-      <text x="805" y="109" class="s">제어·인증이 닿으면 둘 더</text>
-      <rect class="b" x="10" y="200" width="220" height="110" rx="10"/>
-      <text x="25" y="230" class="t">스테이징</text>
-      <text x="25" y="257" class="s">Dropbox → 자동 배포</text>
-      <text x="25" y="279" class="s">헬스 체크로 판정</text>
-      <rect class="b" x="270" y="200" width="220" height="110" rx="10"/>
-      <text x="285" y="230" class="t">화면 검증</text>
-      <text x="285" y="257" class="s">verify · admin 으로 보기만</text>
-      <text x="285" y="279" class="s">데스크톱 · 모바일 캡처</text>
-      <rect class="b" x="530" y="200" width="220" height="110" rx="10"/>
-      <text x="545" y="230" class="t">마무리</text>
-      <text x="545" y="257" class="s">wrap · 정본 문서를 코드와 대조</text>
-      <text x="545" y="279" class="s">그 뒤 커밋</text>
-      <rect class="b k" x="790" y="200" width="220" height="110" rx="10"/>
-      <text x="805" y="230" class="t">프로덕션</text>
-      <text x="805" y="257" class="s">사람이 승인</text>
-      <text x="805" y="279" class="s">트리거 파일 하나</text>
-      <path class="ln" d="M230,85 H266" marker-end="url(#ah3)"/>
-      <path class="ln" d="M490,85 H526" marker-end="url(#ah3)"/>
-      <path class="ln" d="M750,85 H786" marker-end="url(#ah3)"/>
-      <path class="ln" d="M230,255 H266" marker-end="url(#ah3)"/>
-      <path class="ln" d="M490,255 H526" marker-end="url(#ah3)"/>
-      <path class="ln" d="M750,255 H786" marker-end="url(#ah3)"/>
-      <path class="ln" d="M900,140 V170 H120 V196" marker-end="url(#ah3)"/>
-      <text x="140" y="164" class="s">코드를 쓴 쪽은 리뷰하지 않는다 — 구현과 리뷰 에이전트를 나눴다</text>
-      <rect class="b" x="10" y="345" width="320" height="50" rx="8"/>
-      <text x="25" y="376" class="s">CLAUDE.md 하나 — 구현·리뷰가 같은 규약을 읽는다</text>
-      <rect class="b" x="350" y="345" width="320" height="50" rx="8"/>
-      <text x="365" y="376" class="s">편집마다 훅 — eslint · ruff 자동 검사</text>
-      <rect class="b" x="690" y="345" width="320" height="50" rx="8"/>
-      <text x="705" y="376" class="s">서버 테스트 704개 · 순수 로직은 vitest</text>
-    </svg>
-  </div>
   <span class="no"></span>
 </div></section>
 
