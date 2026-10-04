@@ -4,40 +4,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="deck.css"></head><body>
 <section class="slide"><div class="card">
-  <div class="kicker">경력 ① 이기종 통합</div>
-  <h2>로봇 9종 · 파서 하나 <small class="v-sub">필드 82개 선언 · 기종별 바이트 파서 14개 → 0 · −444줄</small></h2>
-  <div class="lys"><div class="ly">
-      <div class="ly-n"><i>01</i><b>수신 · 판별</b><span>MQTT · 타입</span></div>
-      <div class="ly-h"><b>cmd 로 갈래, 타입은 robot_id 로</b><span>9종이 같은 상태 cmd 를 쓴다 — cmd · 길이는 교차 검증만</span></div>
-      <pre class="lc" data-lang="parsers.py">if len(payload) == 4: self._handle_cmd_ack(robot_id, cmd, payload[3])  # ACK
-robot_type = get_robot_type_map().get(robot_id)
-cmd_for_type, packet_size = _type_cmd_packet.get(robot_type, (None, None))
-if cmd_for_type is None or cmd_for_type != cmd: return None  # 설정 오류 방어
-if len(payload) &lt; packet_size: return None</pre>
-    </div><div class="ly">
-      <div class="ly-n"><i>02</i><b>스키마</b><span>robots.json</span></div>
-      <div class="ly-h"><b>기종은 코드가 아니라 선언</b><span>이름 · 오프셋 · 타입만 · 닮은 기종은 fields_ref · 저장하면 재시작 없이 반영</span></div>
-      <pre class="lc" data-lang="robots.json">{&quot;name&quot;: &quot;pos_x&quot;, &quot;offset&quot;: 3,  &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6},
-{&quot;name&quot;: &quot;yaw&quot;,   &quot;offset&quot;: 19, &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 2},
-&quot;amr_cr&quot;: {&quot;fields_ref&quot;: &quot;amr_cl&quot;}</pre>
-    </div><div class="ly">
-      <div class="ly-n"><i>03</i><b>해석</b><span>interpret()</span></div>
-      <div class="ly-h"><b>기종을 모르는 루프 하나</b><span>서버 Python · 브라우저 JS 가 같은 스키마로 같은 루프</span></div>
-      <pre class="lc" data-lang="parsers.py">for f in fields:
+  <div class="kicker">경력 ①</div>
+  <h2>이기종 통합</h2>
+  <div class="z-grid"><div class="z-left"><div class="diagram"><svg viewBox="0 0 560 480" role="img" aria-label="사용자, 관제 서버, 이기종 통합, 통신, 로봇 다섯 층 구조에서 이기종 통합 층이 제각각인 로봇 패킷을 하나의 스키마와 파서로 묶는 그림"><defs><marker id="z1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="z-band" x="0" y="0" width="560" height="56" rx="10"/><text x="16" y="34.0" class="z-name">사용자</text><rect class="z-chip" x="110" y="10" width="210" height="36" rx="10"/><text x="215" y="34" class="z-c" text-anchor="middle">웹 관제 · React</text><rect class="z-chip" x="330" y="10" width="218" height="36" rx="10"/><text x="439" y="34" class="z-c" text-anchor="middle">워치 · Wear OS</text><path class="z-ln" d="M280,58 V80" marker-end="url(#z1)" marker-start="url(#z1)"/><text x="290" y="74.0" class="z-p">WebSocket · REST</text><rect class="z-band" x="0" y="82" width="560" height="56" rx="10"/><text x="16" y="116.0" class="z-name">관제 서버</text><text x="110" y="116" class="z-c">FastAPI — 태스크 큐 · 명령 ACK · 제어권 · 가동률</text><path class="z-ln" d="M280,140 V162" marker-end="url(#z1)" marker-start="url(#z1)"/><rect class="z-band k" x="0" y="164" width="560" height="112" rx="10"/><text x="16" y="226.0" class="z-name k">이기종 통합</text><rect class="z-chip k" x="110" y="176" width="205" height="40" rx="10"/><text x="212" y="202" class="z-c" text-anchor="middle">robots.json · 9종 선언</text><rect class="z-chip k" x="325" y="176" width="223" height="40" rx="10"/><text x="436" y="202" class="z-c" text-anchor="middle">공용 파서 interpret()</text><text x="110" y="246" class="z-p">서버 · 브라우저가 같은 스키마로 해석</text><text x="110" y="266" class="z-hot">기종 추가 = JSON 한 블록</text><path class="z-ln" d="M280,278 V300" marker-end="url(#z1)" marker-start="url(#z1)"/><text x="290" y="294.0" class="z-p">바이너리 그대로</text><rect class="z-band" x="0" y="302" width="560" height="56" rx="10"/><text x="16" y="336.0" class="z-name">통신</text><text x="110" y="326" class="z-c">현장 MQTT 브로커 — 프로토콜 22종</text><text x="110" y="346" class="z-p">ROBOT{N} 상태 · ACK ↑    MOS{n} 명령 ↓</text><path class="z-ln" d="M280,360 V382" marker-end="url(#z1)" marker-start="url(#z1)"/><rect class="z-band" x="0" y="384" width="560" height="92" rx="10"/><text x="16" y="436.0" class="z-name">로봇</text><rect class="z-chip" x="110" y="394" width="68" height="50" rx="10"/><text x="144" y="415" class="z-cs" text-anchor="middle">AMR</text><text x="144" y="434" class="z-ps" text-anchor="middle">98B</text><rect class="z-chip" x="184" y="394" width="68" height="50" rx="10"/><text x="218" y="415" class="z-cs" text-anchor="middle">저상 AMR</text><text x="218" y="434" class="z-ps" text-anchor="middle">17B</text><rect class="z-chip" x="258" y="394" width="68" height="50" rx="10"/><text x="292" y="415" class="z-cs" text-anchor="middle">청소 AMR</text><text x="292" y="434" class="z-ps" text-anchor="middle">17B</text><rect class="z-chip" x="332" y="394" width="68" height="50" rx="10"/><text x="366" y="415" class="z-cs" text-anchor="middle">Hunter</text><text x="366" y="434" class="z-ps" text-anchor="middle">30B · GPS</text><rect class="z-chip" x="406" y="394" width="68" height="50" rx="10"/><text x="440" y="415" class="z-cs" text-anchor="middle">Go2</text><text x="440" y="434" class="z-ps" text-anchor="middle">22B</text><rect class="z-chip" x="480" y="394" width="68" height="50" rx="10"/><text x="514" y="415" class="z-cs" text-anchor="middle">RT100</text><text x="514" y="434" class="z-ps" text-anchor="middle">26B</text><text x="110" y="464" class="z-p">실물 6종 + 가상 3종 · 패킷 길이 · 필드 위치 · 타입이 제각각</text></svg></div></div><div class="z-right">
+  <h3>구현 방식</h3>
+  <div class="z-item"><b>1 · 기종은 코드가 아니라 선언</b><p>이름 · 오프셋 · 타입만 적는다</p>
+  <pre class="lc" data-lang="robots.json">{&quot;name&quot;: &quot;pos_x&quot;, &quot;offset&quot;: 3, &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6}</pre></div>
+  <div class="z-item"><b>2 · 기종을 모르는 루프 하나</b><p>서버 Python · 브라우저 JS 가 같은 스키마로</p>
+  <pre class="lc" data-lang="interpret()">for f in fields:
     t, off = f[&#x27;type&#x27;], f[&#x27;offset&#x27;]
-    if t == &#x27;u8&#x27;:
-        val = payload[off]
-    else:
-        val = struct.unpack(_TYPE_FMT[t], payload[off:off + _TYPE_SIZE[t]])[0]
-    out[f[&#x27;name&#x27;]] = val</pre>
-    </div><div class="ly">
-      <div class="ly-n"><i>04</i><b>표현</b><span>shape()</span></div>
-      <div class="ly-h"><b>화면용 모양만 기종별로</b><span>바이트 연산 없이 flat → nested — 표에 함수만 등록</span></div>
-      <pre class="lc" data-lang="parser.js">const parsed = config.shape(interpret(payload, config.fields));
-const SHAPE_FUNCTIONS = { go2: shapeGO2, hunter: shapeHunter,
-                          rt100: shapeRT100, /* … 9종 */ };</pre>
-    </div></div>
-  <p class="ly-foot"><b>전환</b> 옛 파서를 폴백으로 둔 채 투입 → 옛 결과 = 새 결과 골든 테스트(서버 6 · 브라우저 8) → 스키마 켜기 → 옛 파서 삭제</p>
+    val = payload[off] if t == &#x27;u8&#x27; else struct.unpack(...)[0]
+    out[f[&#x27;name&#x27;]] = val</pre></div>
+  <div class="z-item"><b>3 · 타입은 robot_id 로</b><p>9종이 같은 상태 cmd 를 쓴다 — cmd · 길이는 검증만, 어긋나면 버린다</p></div>
+  <div class="z-item"><b>4 · 안전하게 갈아끼움</b><p>옛 파서 폴백 → 옛 결과 = 새 결과 골든 테스트 → 옛 파서 14개 · 444줄 삭제</p></div>
+</div></div>
   <span class="no"></span>
 </div></section>
 

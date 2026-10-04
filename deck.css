@@ -215,6 +215,28 @@ h2{font-size:1.75em;line-height:1.3;margin:0 0 .6em;letter-spacing:-.015em}
 .ly-foot{margin:.7em 0 0;font-size:.72em;color:var(--sub)}.ly-foot b{color:var(--acc);margin-right:.6em}
 @media (max-width:760px){.ly{grid-template-columns:1fr}.lc{white-space:pre-wrap}}
 
+/* ---- 큰 구조 | 구현 방식 ---- */
+.z-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2.2em;flex:1;min-height:0}
+.z-left{min-height:0;display:flex}
+.z-right{display:flex;flex-direction:column;gap:.7em;min-height:0}
+.z-right h3{margin:0 0 .1em;font-size:1em;color:var(--acc)}
+.z-item b{display:block;font-size:.88em}
+.z-item p{margin:.1em 0 .35em;font-size:.74em;color:var(--sub);line-height:1.5}
+.z-item .lc{font-size:.56em}
+.diagram .z-band{fill:var(--soft);stroke:var(--line);stroke-width:1.5}
+.diagram .z-band.k{fill:color-mix(in srgb,var(--acc) 15%,var(--soft));stroke:var(--acc);stroke-width:2.5}
+.diagram .z-name{fill:var(--sub);font-size:15px;font-weight:700}
+.diagram .z-name.k{fill:var(--acc)}
+.diagram .z-chip{fill:var(--slide);stroke:var(--line);stroke-width:1.2}
+.diagram .z-chip.k{stroke:var(--acc);stroke-width:1.8}
+.diagram .z-c{fill:var(--ink);font-size:15px;font-weight:700}
+.diagram .z-cs{fill:var(--ink);font-size:13px;font-weight:700}
+.diagram .z-p{fill:var(--sub);font-size:13.5px}
+.diagram .z-ps{fill:var(--sub);font-size:12px}
+.diagram .z-hot{fill:var(--hot);font-size:14px;font-weight:700}
+.diagram .z-ln{stroke:var(--sub);stroke-width:1.6;fill:none}
+@media (max-width:760px){.z-grid{grid-template-columns:1fr}}
+
 /* 조작 막대 */
 .bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:var(--slide);border:1px solid var(--line);border-radius:999px;padding:4px 6px;font-size:13px;z-index:9;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .bar a,.bar button{border:0;background:none;color:var(--ink);font:inherit;padding:4px 10px;border-radius:999px;cursor:pointer;text-decoration:none}
