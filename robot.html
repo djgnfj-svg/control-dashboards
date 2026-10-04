@@ -193,18 +193,63 @@
 </div></section>
 
 <section class="slide"><div class="card">
-  <div class="kicker">개발 체계</div>
-  <h2>누가 AI 로 고쳐도 같은 방식으로</h2>
-  <div class="flows">
-    <div class="flow">
-      <b>하네스</b>
-      <ol><li>요청</li><li>구현 에이전트</li><li>리뷰 에이전트</li><li>바꾼 의도를 문서로</li></ol>
-    </div>
+  <div class="kicker">개발 아키텍처</div>
+  <h2>누가 AI 로 고쳐도 같은 길로</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 1020 400" role="img" aria-label="아이디어, 기획, 구현, 리뷰, 스테이징, 화면 검증, 마무리, 프로덕션으로 이어지는 Claude Code 개발 하네스">
+      <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
+      <rect class="b" x="10" y="30" width="220" height="110" rx="10"/>
+      <text x="25" y="60" class="t">아이디어</text>
+      <text x="25" y="87" class="s">brainstorm</text>
+      <text x="25" y="109" class="s">접근 2~3개 중 사람이 고른다</text>
+      <rect class="b k" x="270" y="30" width="220" height="110" rx="10"/>
+      <text x="285" y="60" class="t">기획</text>
+      <text x="285" y="87" class="s">plan · 질문으로 빈칸을 채워</text>
+      <text x="285" y="109" class="s">최소 단위 기획 문서 승인</text>
+      <rect class="b" x="530" y="30" width="220" height="110" rx="10"/>
+      <text x="545" y="60" class="t">구현</text>
+      <text x="545" y="87" class="s">implement</text>
+      <text x="545" y="109" class="s">큰 변경만 implementer 에이전트</text>
+      <rect class="b k" x="790" y="30" width="220" height="110" rx="10"/>
+      <text x="805" y="60" class="t">리뷰</text>
+      <text x="805" y="87" class="s">review-correctness 기본</text>
+      <text x="805" y="109" class="s">제어·인증이 닿으면 둘 더</text>
+      <rect class="b" x="10" y="200" width="220" height="110" rx="10"/>
+      <text x="25" y="230" class="t">스테이징</text>
+      <text x="25" y="257" class="s">Dropbox → 자동 배포</text>
+      <text x="25" y="279" class="s">헬스 체크로 판정</text>
+      <rect class="b" x="270" y="200" width="220" height="110" rx="10"/>
+      <text x="285" y="230" class="t">화면 검증</text>
+      <text x="285" y="257" class="s">verify · admin 으로 보기만</text>
+      <text x="285" y="279" class="s">데스크톱 · 모바일 캡처</text>
+      <rect class="b" x="530" y="200" width="220" height="110" rx="10"/>
+      <text x="545" y="230" class="t">마무리</text>
+      <text x="545" y="257" class="s">wrap · 정본 문서를 코드와 대조</text>
+      <text x="545" y="279" class="s">그 뒤 커밋</text>
+      <rect class="b k" x="790" y="200" width="220" height="110" rx="10"/>
+      <text x="805" y="230" class="t">프로덕션</text>
+      <text x="805" y="257" class="s">사람이 승인</text>
+      <text x="805" y="279" class="s">트리거 파일 하나</text>
+      <path class="ln" d="M230,85 H266" marker-end="url(#ah3)"/>
+      <path class="ln" d="M490,85 H526" marker-end="url(#ah3)"/>
+      <path class="ln" d="M750,85 H786" marker-end="url(#ah3)"/>
+      <path class="ln" d="M230,255 H266" marker-end="url(#ah3)"/>
+      <path class="ln" d="M490,255 H526" marker-end="url(#ah3)"/>
+      <path class="ln" d="M750,255 H786" marker-end="url(#ah3)"/>
+      <path class="ln" d="M900,140 V170 H120 V196" marker-end="url(#ah3)"/>
+      <text x="140" y="164" class="s">코드를 쓴 쪽은 리뷰하지 않는다 — 구현과 리뷰 에이전트를 나눴다</text>
+      <rect class="b" x="10" y="345" width="320" height="50" rx="8"/>
+      <text x="25" y="376" class="s">CLAUDE.md 하나 — 구현·리뷰가 같은 규약을 읽는다</text>
+      <rect class="b" x="350" y="345" width="320" height="50" rx="8"/>
+      <text x="365" y="376" class="s">편집마다 훅 — eslint · ruff 자동 검사</text>
+      <rect class="b" x="690" y="345" width="320" height="50" rx="8"/>
+      <text x="705" y="376" class="s">서버 테스트 704개 · 순수 로직은 vitest</text>
+    </svg>
   </div>
-  <ul class="pts">
-    <li>연구원도 AI 로 관제 코드를 고치게 열고, 구현·리뷰 에이전트를 나눈 하네스로 <b>같은 순서·같은 기록</b>을 남기게 했다</li>
+  <ul class="pts row">
+    <li>연구원도 AI 로 고치게 열되, 무엇을 왜 바꿨는지 <b>기획 문서와 정본에 남는다</b></li>
     <li>안 쓰이는 단계를 사용량 실측으로 걷어 리뷰 토큰 39% 절감</li>
-    <li>8개 축 병렬 탐지 + 반증 에이전트 코드 감사로 <b>40건 탐지 → 25건 확정</b>, 스테이징이 실로봇 브로커를 쓰던 문제 발견</li>
+    <li>병렬 탐지 + 반증 에이전트 코드 감사로 40건 탐지 → 25건 확정</li>
   </ul>
   <span class="no"></span>
 </div></section>
