@@ -198,6 +198,23 @@ h2{font-size:1.75em;line-height:1.3;margin:0 0 .6em;letter-spacing:-.015em}
 .diagram .v-ln{stroke:var(--sub);stroke-width:1.6;fill:none}
 @media (max-width:760px){.v-grid,.v-steps{grid-template-columns:1fr}}
 
+
+
+
+
+/* ---- 계층 틀 ---- */
+.lys{display:flex;flex-direction:column;gap:.45em;flex:1;min-height:0;justify-content:center}
+.ly{display:grid;grid-template-columns:8.6em minmax(0,1fr) minmax(0,1.45fr);gap:1em;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:.5em .9em;position:relative}
+.ly+.ly::before{content:"";position:absolute;left:2.1em;top:-.5em;height:.5em;border-left:2px solid var(--acc)}
+.ly-n{display:grid;grid-template-columns:auto 1fr;column-gap:.5em;align-items:baseline}
+.ly-n i{grid-row:span 2;font-style:normal;font-weight:700;font-size:1.25em;color:var(--acc);font-variant-numeric:tabular-nums}
+.ly-n b{font-size:.95em}.ly-n span{font-size:.68em;color:var(--sub)}
+.ly-h b{display:block;font-size:.85em}.ly-h span{display:block;font-size:.68em;color:var(--sub);line-height:1.45;margin-top:.15em}
+.lc{margin:0;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;padding:.45em .8em;font:.56em/1.45 ui-monospace,Consolas,monospace;color:var(--ink);white-space:pre;overflow:hidden;position:relative}
+.lc::after{content:attr(data-lang);position:absolute;right:.7em;bottom:.35em;color:var(--acc);font-weight:700;font-size:.9em}
+.ly-foot{margin:.7em 0 0;font-size:.72em;color:var(--sub)}.ly-foot b{color:var(--acc);margin-right:.6em}
+@media (max-width:760px){.ly{grid-template-columns:1fr}.lc{white-space:pre-wrap}}
+
 /* 조작 막대 */
 .bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:var(--slide);border:1px solid var(--line);border-radius:999px;padding:4px 6px;font-size:13px;z-index:9;box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .bar a,.bar button{border:0;background:none;color:var(--ink);font:inherit;padding:4px 10px;border-radius:999px;cursor:pointer;text-decoration:none}
