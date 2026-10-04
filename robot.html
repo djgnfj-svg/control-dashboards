@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>로봇 관제 대시보드</title>
-<meta name="description" content="기종이 다른 현장 로봇 18대를 브라우저 하나로 보고 부리는 웹 관제 — 구조와 그 위에서 푼 문제">
+<meta name="description" content="이기종 현장 로봇을 브라우저로 관제하는 웹 시스템 — 아키텍처">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="deck.css">
@@ -14,11 +14,11 @@
 <section class="slide"><div class="card cover">
   <div class="kicker">Project 01 · Robot Fleet Control</div>
   <h1>로봇 관제 대시보드</h1>
-  <p class="lead">기종이 다른 현장 로봇을 브라우저 하나로 보고 부리는 웹 관제. 기획부터 운영까지 혼자 맡아 현장에서 돌리고 있습니다.</p>
+  <p class="lead">이기종 현장 로봇을 브라우저로 관제하는 웹 시스템 · 설계부터 운영까지 1인</p>
   <div class="stats">
     <div class="stat"><b>9종 18대</b><span>실물 9 · 가상 9 · 현장 4곳</span></div>
-    <div class="stat"><b>13초대→186ms</b><span>맵 에디터 조작 지연</span></div>
-    <div class="stat"><b>704개</b><span>서버 테스트</span></div>
+    <div class="stat"><b>13초→186ms</b><span>맵 에디터 조작</span></div>
+    <div class="stat"><b>704</b><span>서버 테스트</span></div>
   </div>
   <div class="stack"><span>React 19</span><span>FastAPI</span><span>MQTT</span><span>WebRTC · MediaMTX</span><span>Nginx</span><span>Docker Compose</span><span>systemd</span><span>Kotlin · Wear OS</span><span>Claude Code</span></div>
   <span class="no"></span>
@@ -26,175 +26,43 @@
 
 <section class="slide"><div class="card">
   <div class="kicker">화면</div>
-  <h2>관제 — 로봇 목록 · 지도 · 상태 · 제어</h2>
-  <div class="split">
-    <div class="shot"><a href="img/robot-control.png" target="_blank" class="zoom"><img src="img/robot-control.png" alt="왼쪽 로봇 목록, 가운데 지도, 아래 상태·진단·제어 버튼이 있는 관제 화면"></a></div>
-    <ul class="pts">
-      <li>로봇을 고르면 위치·배터리·진단이 실시간으로 뜬다</li>
-      <li>제어권을 잡은 한 사람만 이동·정지·루틴 명령을 낸다</li>
-      <li>현장 평면도는 보안상 흐렸다</li>
-    </ul>
-  </div>
+  <h2>관제</h2>
+  <div class="shot"><a href="img/robot-control.png" target="_blank" class="zoom"><img src="img/robot-control.png" alt="로봇 목록, 지도, 상태·진단·제어 패널이 있는 관제 화면"></a><p>평면도는 가림</p></div>
   <span class="no"></span>
 </div></section>
-
 <section class="slide"><div class="card">
   <div class="kicker">아키텍처</div>
-  <h2>상태는 브로커에서 바로, 명령은 서버를 거쳐</h2>
-  <div class="diagram">
-    <svg viewBox="0 0 1000 440" role="img" aria-label="브라우저와 워치가 Nginx 를 거쳐 MQTT 브로커, FastAPI, MediaMTX 로 이어지고, FastAPI 와 로봇이 브로커로 이어지는 구조도">
-      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
-      <!-- 사용자 -->
-      <rect class="b" x="10" y="40" width="170" height="110" rx="10"/>
-      <text x="25" y="70" class="t">브라우저</text>
-      <text x="25" y="95" class="s">React · 지도 · 에디터</text>
-      <text x="25" y="117" class="s">로봇 패킷을 robots.json</text>
-      <text x="25" y="135" class="s">스키마로 직접 해석</text>
-      <rect class="b" x="10" y="300" width="170" height="70" rx="10"/>
-      <text x="25" y="330" class="t">워치</text>
-      <text x="25" y="353" class="s">Wear OS · REST 만</text>
-      <!-- 입구 -->
-      <rect class="b k" x="250" y="20" width="140" height="400" rx="10"/>
-      <text x="265" y="50" class="t">Nginx</text>
-      <text x="265" y="70" class="s">Cloudflare Tunnel</text>
-      <text x="265" y="100" class="r">/mqtt</text>
-      <text x="265" y="225" class="r">/api</text>
-      <text x="265" y="385" class="r">/live</text>
-      <text x="265" y="300" class="s">/ 정적 화면</text>
-      <path class="ln" d="M180,95 H246" marker-end="url(#ah)"/>
-      <text x="186" y="87" class="s">모든 요청</text>
-      <path class="ln" d="M180,335 H214 V220 H246" marker-end="url(#ah)"/>
-      <!-- 서버 -->
-      <rect class="b" x="460" y="150" width="270" height="170" rx="10"/>
-      <text x="475" y="178" class="t">FastAPI</text>
-      <text x="475" y="204" class="s">REST · 3단계 권한</text>
-      <text x="475" y="226" class="s">MQTT 구독 · 같은 스키마로 해석</text>
-      <text x="475" y="248" class="s">태스크 큐 — 1초 틱이</text>
-      <text x="475" y="268" class="s">  배정 · 발행 · ACK 재전송 · 제어권 만료</text>
-      <text x="475" y="296" class="s">공유 상태 (메모리 · 뮤텍스)</text>
-      <path class="ln" d="M390,220 H456" marker-end="url(#ah)"/>
-      <text x="400" y="212" class="s">REST</text>
-      <!-- 영상 -->
-      <rect class="b" x="460" y="355" width="270" height="60" rx="10"/>
-      <text x="475" y="382" class="t">MediaMTX</text>
-      <text x="475" y="402" class="s">RTMP 로 받아 WebRTC 로</text>
-      <path class="ln" d="M456,385 H394" marker-end="url(#ah)"/>
-      <text x="400" y="377" class="s">WHEP</text>
-      <!-- 브로커 · 로봇 -->
-      <rect class="b k" x="800" y="40" width="190" height="90" rx="10"/>
-      <text x="815" y="70" class="t">MQTT 브로커</text>
-      <text x="815" y="93" class="s">현장 · TCP 1883</text>
-      <text x="815" y="113" class="s">WebSocket 9001</text>
-      <path class="ln" d="M390,95 H796" marker-end="url(#ah)"/>
-      <text x="420" y="85" class="s">상태 구독 — 서버를 안 거친다</text>
-      <path class="ln" d="M730,190 H850 V134" marker-end="url(#ah)" marker-start="url(#ah)"/>
-      <text x="745" y="182" class="s">구독 · 명령 발행</text>
-      <rect class="b" x="800" y="250" width="190" height="110" rx="10"/>
-      <text x="815" y="280" class="t">로봇</text>
-      <text x="815" y="303" class="s">6종 실물 + 가상 3종</text>
-      <text x="815" y="323" class="s">상태·ACK ↑ · 명령 ↓</text>
-      <path class="ln" d="M940,134 V246" marker-end="url(#ah)" marker-start="url(#ah)"/>
-      <path class="ln" d="M800,340 H766 V385 H734" marker-end="url(#ah)"/>
-      <text x="745" y="355" class="s">RTMP</text>
-    </svg>
-  </div>
-  <ul class="pts row">
-    <li>브라우저와 서버가 브로커를 따로 구독하고 같은 스키마로 해석 — 기종이 늘어도 <code>robots.json</code> 만 고친다</li>
-    <li>명령 · 배정 · 제어권 판정은 서버 한 곳, 1초 틱이 돌린다</li>
-  </ul>
+  <h2>시스템</h2>
+  <div class="diagram"><svg viewBox="0 0 1000 440" role="img" aria-label="브라우저와 워치가 Nginx 를 거쳐 MQTT 브로커, FastAPI, MediaMTX 로 이어지는 구조도"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="40" width="170" height="100" rx="10"/><text x="24" y="68" class="t">브라우저</text><text x="24" y="92" class="s">React</text><text x="24" y="112" class="s">robots.json 스키마로</text><text x="24" y="132" class="s">바이너리 직접 해석</text><rect class="b" x="10" y="300" width="170" height="70" rx="10"/><text x="24" y="328" class="t">워치</text><text x="24" y="352" class="s">Wear OS · REST</text><rect class="b k" x="250" y="20" width="140" height="400" rx="10"/><text x="264" y="50" class="t">Nginx</text><text x="264" y="70" class="s">Cloudflare Tunnel</text><text x="264" y="100" class="r">/mqtt</text><text x="264" y="225" class="r">/api</text><text x="264" y="385" class="r">/live</text><text x="264" y="300" class="s">/ 정적</text><path class="ln" d="M180,95 H246" marker-end="url(#ah)"/><path class="ln" d="M180,335 H214 V220 H246" marker-end="url(#ah)"/><rect class="b" x="460" y="150" width="270" height="170" rx="10"/><text x="474" y="178" class="t">FastAPI</text><text x="474" y="202" class="s">REST · 3단계 권한 · 현장별</text><text x="474" y="222" class="s">MQTT 구독 · 같은 스키마로 해석</text><text x="474" y="242" class="s">태스크 큐 · 1초 틱</text><text x="474" y="262" class="s">공유 상태 · 메모리 + 뮤텍스</text><path class="ln" d="M390,220 H456" marker-end="url(#ah)"/><text x="404" y="212" class="s">REST</text><rect class="b" x="460" y="355" width="270" height="60" rx="10"/><text x="474" y="383" class="t">MediaMTX</text><text x="474" y="407" class="s">RTMP → WebRTC (WHEP)</text><path class="ln" d="M456,385 H394" marker-end="url(#ah)"/><text x="400" y="377" class="s">WHEP</text><rect class="b k" x="800" y="40" width="190" height="90" rx="10"/><text x="814" y="68" class="t">MQTT 브로커</text><text x="814" y="92" class="s">TCP 1883 · WS 9001</text><path class="ln" d="M390,95 H796" marker-end="url(#ah)"/><text x="420" y="85" class="s">MQTT over WebSocket · 상태 구독</text><path class="ln" d="M730,190 H850 V134" marker-end="url(#ah)" marker-start="url(#ah)"/><text x="745" y="182" class="s">구독 · 명령 발행</text><rect class="b" x="800" y="250" width="190" height="110" rx="10"/><text x="814" y="278" class="t">로봇</text><text x="814" y="302" class="s">6종 실물 + 가상 3종</text><text x="814" y="322" class="s">ROBOT{N} 상태·ACK ↑</text><text x="814" y="342" class="s">MOS{n} 명령 ↓</text><path class="ln" d="M940,134 V246" marker-end="url(#ah)" marker-start="url(#ah)"/><path class="ln" d="M800,340 H766 V385 H734" marker-end="url(#ah)"/><text x="745" y="355" class="s">RTMP</text></svg></div>
   <span class="no"></span>
 </div></section>
-
 <section class="slide"><div class="card">
-  <div class="kicker">아키텍처 · 명령</div>
-  <h2>명령 한 번이 로봇에 닿기까지</h2>
-  <div class="flows">
-    <div class="flow">
-      <b>명령</b>
-      <ol><li>REST · 권한</li><li>현장별 대기열</li><li>배정 — 가까운 가용 로봇 · 우선순위</li><li>로봇별 큐</li><li>ACK 대기 등록 → 발행</li><li>로봇 ACK</li></ol>
-    </div>
-    <div class="flow">
-      <b>안 닿으면</b>
-      <ol><li>1.5초마다 재전송 · 로봇 × 명령별</li><li>포기하면 「미배달」 경고</li><li>큐는 안 지우고 사람에게</li></ol>
-    </div>
-  </div>
-  <ul class="pts">
-    <li>접수 순서로만 돌던 큐를 <b>배정·로봇별 발행 두 층</b>으로 나누고 우선순위를 넣어, 평소엔 FIFO · 긴급만 앞으로</li>
-    <li>로봇당 하나던 ACK 추적을 로봇 × 명령으로 나눠 <b>취소한 로봇이 다시 출발하던 문제 제거</b> · 회귀 테스트 4 → 25건</li>
-    <li>클라이언트 타이머 4개가 제각각 내던 제어권 만료를 <b>서버 순수 함수 하나</b>로 모아 먼 길 가던 작업이 끊기지 않게</li>
-  </ul>
+  <div class="kicker">아키텍처</div>
+  <h2>명령 파이프라인</h2>
+  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="명령이 REST, 미배정 풀, 배정, 로봇별 큐, 발행을 거쳐 로봇에 닿고 ACK 로 추적되는 흐름"><defs><marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="30" width="150" height="120" rx="10"/><text x="24" y="58" class="t">REST</text><text x="24" y="82" class="s">/api/tasks</text><text x="24" y="102" class="s">3단계 권한</text><rect class="b" x="182" y="30" width="150" height="120" rx="10"/><text x="196" y="58" class="t">미배정 풀</text><text x="196" y="82" class="s">현장(MOS)별</text><rect class="b k" x="354" y="30" width="150" height="120" rx="10"/><text x="368" y="58" class="t">배정</text><text x="368" y="82" class="s">가까운 가용 로봇</text><text x="368" y="102" class="s">도달성 · 에러 제외</text><text x="368" y="122" class="s">우선순위</text><rect class="b" x="526" y="30" width="150" height="120" rx="10"/><text x="540" y="58" class="t">로봇별 큐</text><text x="540" y="82" class="s">FIFO</text><rect class="b k" x="698" y="30" width="150" height="120" rx="10"/><text x="712" y="58" class="t">발행</text><text x="712" y="82" class="s">ACK 대기 등록 후</text><text x="712" y="102" class="s">MOS{n} 토픽</text><rect class="b" x="870" y="30" width="150" height="120" rx="10"/><text x="884" y="58" class="t">로봇</text><text x="884" y="82" class="s">robot_id 로 수신</text><path class="ln" d="M160,90 H178" marker-end="url(#ac)"/><path class="ln" d="M332,90 H350" marker-end="url(#ac)"/><path class="ln" d="M504,90 H522" marker-end="url(#ac)"/><path class="ln" d="M676,90 H694" marker-end="url(#ac)"/><path class="ln" d="M848,90 H866" marker-end="url(#ac)"/><rect class="b" x="183" y="175" width="674" height="40" rx="8"/><text x="197" y="201" class="s">1초 틱 — tick_tasks · retry_tick · 제어권 만료</text><path class="ln" d="M935,150 V246" marker-end="url(#ac)"/><rect class="b" x="790" y="250" width="220" height="120" rx="10"/><text x="804" y="278" class="t">로봇 ACK</text><text x="804" y="302" class="s">ROBOT{N} 토픽</text><rect class="b k" x="530" y="250" width="220" height="120" rx="10"/><text x="544" y="278" class="t">ack_retry</text><text x="544" y="302" class="s">로봇 × 명령별 추적</text><text x="544" y="322" class="s">1.5초 재전송 · 최대 5/14회</text><rect class="b" x="270" y="250" width="220" height="120" rx="10"/><text x="284" y="278" class="t">미배달</text><text x="284" y="302" class="s">경고만 · 큐 유지</text><text x="284" y="322" class="s">사람이 판단</text><rect class="b k" x="10" y="250" width="220" height="120" rx="10"/><text x="24" y="278" class="t">제어권 lease</text><text x="24" y="302" class="s">lock_expired() 순수 함수</text><text x="24" y="322" class="s">연결 30초 · 활동 180초</text><path class="ln" d="M790,310 H754" marker-end="url(#ac)"/><path class="ln" d="M530,310 H494" marker-end="url(#ac)"/><text x="500" y="300" class="s">포기</text></svg></div>
   <span class="no"></span>
 </div></section>
-
 <section class="slide"><div class="card">
   <div class="kicker">UI · 성능</div>
-  <h2>맵 에디터 — 조작마다 13초 멈춤</h2>
-  <div class="case">
-    <div class="col">
-      <ul class="pts">
-        <li>오버레이 4,800개를 조작마다 전부 떼고 다시 붙였다 — 떼는 루프만 8~11초</li>
-        <li>오버레이를 키로 들고 <b>바뀐 것만 고치는 증분 갱신</b>으로 바꿨다</li>
-        <li>바뀐 것을 가리는 비교는 순수 함수로 떼어 테스트로 고정</li>
-      </ul>
-    </div>
-    <div class="col">
-      <p class="big">13초대 → 186ms 이내<small>맵 에디터 조작 · 가장 느린 행 클릭 기준</small></p>
-      <p class="big">11.4초 → 0.3초<small>관제 지도 레이어 끄기</small></p>
-    </div>
-  </div>
+  <h2>맵 에디터 렌더링</h2>
+  <div class="diagram"><svg viewBox="0 0 1020 360" role="img" aria-label="전량 재구축에서 키 기반 증분 갱신으로 바꾼 맵 에디터 렌더링"><defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="26" class="r">Before</text><rect class="b" x="10" y="40" width="470" height="64" rx="10"/><text x="24" y="68" class="t">선택 · 드래그</text><text x="24" y="92" class="s">effect deps 에 selectedItem</text><path class="ln" d="M245,104 V126" marker-end="url(#am)"/><rect class="b" x="10" y="130" width="470" height="64" rx="10"/><text x="24" y="158" class="t">오버레이 4,800개 전량 재구축</text><text x="24" y="182" class="s">setMap(null) 루프만 8~11초</text><text x="10" y="250" class="big2">13초대</text><text x="540" y="26" class="r">After</text><rect class="b k" x="540" y="40" width="470" height="64" rx="10"/><text x="554" y="68" class="t">gpsMapDiff() — 순수 함수 · 참조 비교</text><text x="554" y="92" class="s">vitest 11개로 고정</text><path class="ln" d="M775,104 V126" marker-end="url(#am)"/><rect class="b k" x="540" y="130" width="470" height="64" rx="10"/><text x="554" y="158" class="t">키 레지스트리 — 바뀐 것만</text><text x="554" y="182" class="s">선택 = 아이콘 2개 · 드래그 = 마커 1개 + setPath</text><path class="ln" d="M775,194 V216" marker-end="url(#am)"/><rect class="b k" x="540" y="220" width="470" height="64" rx="10"/><text x="554" y="248" class="t">뷰포트 컬링 · 부착 상한 500</text><text x="554" y="272" class="s">초기 생성은 프레임 예산으로 분할</text><text x="540" y="340" class="big2">186ms 이내</text><text x="10" y="340" class="s">관제 지도 레이어 11.4초 → 0.3초</text></svg></div>
   <span class="no"></span>
 </div></section>
-
 <section class="slide"><div class="card">
   <div class="kicker">화면</div>
   <h2>이력 — 로봇별 하루 가동 타임라인</h2>
-  <div class="split">
-    <div class="shot"><a href="img/robot-history.png" target="_blank" class="zoom"><img src="img/robot-history.png" alt="로봇별 하루 가동 타임라인과 합계"></a></div>
-    <ul class="pts">
-      <li>지난 상태를 되짚을 수 없던 관제에 로봇별 하루 가동·주행·태스크·미배달을 모았다</li>
-      <li>서버가 로봇 패킷으로 가동률을 직접 센다</li>
-    </ul>
-  </div>
+  <div class="shot"><a href="img/robot-history.png" target="_blank" class="zoom"><img src="img/robot-history.png" alt="로봇별 하루 가동 타임라인과 합계"></a></div>
   <span class="no"></span>
 </div></section>
-
-<section class="slide"><div class="card">
-  <div class="kicker">현장 연결</div>
-  <h2>영상 · 워치 · 권한</h2>
-  <ul class="pts">
-    <li>HLS 버퍼로 <b>17초 늦던 로봇 카메라</b>를 WebRTC(WHEP)로 전환</li>
-    <li>로봇마다 따로 보내던 영상을 MediaMTX 로 모아 대수와 무관하게 1회선</li>
-    <li>관제 PC 로 돌아가야 부를 수 있던 로봇을 <b>Wear OS 워치</b>에서 호출 — 새 길 없이 기존 REST 재사용</li>
-    <li>관리자·사용자 두 단계 권한에 매니저를 더해 현장 단위로 위임</li>
-    <li>현장 PC 에서만 하던 제어를 브라우저로 옮겨 제어 절차 10단계 → 2단계</li>
-  </ul>
-  <span class="no"></span>
-</div></section>
-
 <section class="slide"><div class="card">
   <div class="kicker">운영</div>
-  <h2>Git 없는 현장 서버에 자동 배포</h2>
-  <div class="flows">
-    <div class="flow">
-      <b>스테이징</b>
-      <ol><li>Dropbox 동기화</li><li>systemd 감시 · 10초마다 내용 해시</li><li>compose 빌드 · 실제 종료 코드</li><li>Nginx 거친 헬스 체크 · 최대 60초</li><li>OK / FAILED</li></ol>
-    </div>
-    <div class="flow">
-      <b>프로덕션</b>
-      <ol><li>트리거 파일 하나</li><li>같은 빌드 · 헬스 체크</li><li>무중단 반영</li></ol>
-    </div>
-  </div>
-  <ul class="pts">
-    <li>SSH 로 하던 손 배포를 <b>Dropbox 동기화 + systemd 감시 자동 배포</b>로</li>
-    <li>빌드가 깨져도 「DEPLOY OK」 이던 가짜 신호를 실제 종료 코드·헬스 체크로 바꿔 실패를 FAILED 로</li>
-    <li>스테이징·프로덕션을 한 호스트에서 나눠, 스테이징에서 잰 뒤 반영</li>
-  </ul>
+  <h2>배포 파이프라인</h2>
+  <div class="diagram"><svg viewBox="0 0 1020 380" role="img" aria-label="Dropbox 와 systemd 로 스테이징과 프로덕션에 자동 배포하는 파이프라인"><defs><marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="20" width="200" height="80" rx="10"/><text x="24" y="48" class="t">개발 PC</text><text x="24" y="72" class="s">Git 없는 현장</text><path class="ln" d="M110,100 V146" marker-end="url(#ad)"/><rect class="b" x="10" y="150" width="200" height="80" rx="10"/><text x="24" y="178" class="t">Dropbox</text><text x="24" y="202" class="s">코드 동기화</text><path class="ln" d="M110,230 V276" marker-end="url(#ad)"/><rect class="b k" x="10" y="280" width="200" height="90" rx="10"/><text x="24" y="308" class="t">systemd</text><text x="24" y="332" class="s">auto-deploy.service</text><text x="24" y="352" class="s">크래시 감시</text><path class="ln" d="M210,325 H240 V85 H266" marker-end="url(#ad)"/><path class="ln" d="M210,325 H266" marker-end="url(#ad)"/><text x="270" y="32" class="r">스테이징 :81</text><rect class="b" x="270" y="40" width="225" height="90" rx="10"/><text x="284" y="68" class="t">변경 감시</text><text x="284" y="92" class="s">10초마다 내용 해시</text><text x="284" y="112" class="s">5초 안정 대기</text><rect class="b" x="520" y="40" width="225" height="90" rx="10"/><text x="534" y="68" class="t">compose up --build</text><text x="534" y="92" class="s">실제 종료 코드로 판정</text><rect class="b k" x="770" y="40" width="225" height="90" rx="10"/><text x="784" y="68" class="t">/api/health</text><text x="784" y="92" class="s">Nginx 경유 · 최대 60초</text><text x="784" y="112" class="s">→ OK / FAILED</text><text x="270" y="272" class="r">프로덕션 :80</text><rect class="b" x="270" y="280" width="225" height="90" rx="10"/><text x="284" y="308" class="t">deploy-trigger</text><text x="284" y="332" class="s">파일 하나로 반영</text><rect class="b" x="520" y="280" width="225" height="90" rx="10"/><text x="534" y="308" class="t">compose up --build</text><text x="534" y="332" class="s">실제 종료 코드로 판정</text><rect class="b k" x="770" y="280" width="225" height="90" rx="10"/><text x="784" y="308" class="t">/api/health</text><text x="784" y="332" class="s">→ OK / FAILED</text><path class="ln" d="M495,85 H516" marker-end="url(#ad)"/><path class="ln" d="M745,85 H766" marker-end="url(#ad)"/><path class="ln" d="M495,325 H516" marker-end="url(#ad)"/><path class="ln" d="M745,325 H766" marker-end="url(#ad)"/><text x="270" y="175" class="s">한 호스트에 두 환경 · 브로커 · 설정 공유</text></svg></div>
   <span class="no"></span>
 </div></section>
-
 <section class="slide"><div class="card">
   <div class="kicker">개발 아키텍처</div>
-  <h2>누가 AI 로 고쳐도 같은 길로</h2>
+  <h2>AI 개발 하네스</h2>
   <div class="diagram">
     <svg viewBox="0 0 1020 400" role="img" aria-label="아이디어, 기획, 구현, 리뷰, 스테이징, 화면 검증, 마무리, 프로덕션으로 이어지는 Claude Code 개발 하네스">
       <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
@@ -246,11 +114,6 @@
       <text x="705" y="376" class="s">서버 테스트 704개 · 순수 로직은 vitest</text>
     </svg>
   </div>
-  <ul class="pts row">
-    <li>연구원도 AI 로 고치게 열되, 무엇을 왜 바꿨는지 <b>기획 문서와 정본에 남는다</b></li>
-    <li>안 쓰이는 단계를 사용량 실측으로 걷어 리뷰 토큰 39% 절감</li>
-    <li>병렬 탐지 + 반증 에이전트 코드 감사로 40건 탐지 → 25건 확정</li>
-  </ul>
   <span class="no"></span>
 </div></section>
 
