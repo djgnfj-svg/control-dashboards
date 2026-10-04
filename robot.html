@@ -49,54 +49,14 @@
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ① 이기종 통합 · 구현</div>
-  <h2>스키마 하나, 파서 하나</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="robots.json">&quot;hunter&quot;: {
-  &quot;cmd_name&quot;: &quot;ROBOT_DATA&quot;, &quot;packet_size&quot;: 30,
-  &quot;fields&quot;: [
-    {&quot;name&quot;: &quot;mos_id&quot;,  &quot;offset&quot;: 2,  &quot;type&quot;: &quot;u8&quot;},
-    {&quot;name&quot;: &quot;pos_x&quot;,   &quot;offset&quot;: 3,  &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6},
-    {&quot;name&quot;: &quot;pos_y&quot;,   &quot;offset&quot;: 11, &quot;type&quot;: &quot;f64&quot;, &quot;round&quot;: 6},
-    ...
-    {&quot;name&quot;: &quot;error&quot;,   &quot;offset&quot;: 29, &quot;type&quot;: &quot;u8&quot;}
-  ]
-}</pre><pre class="code" data-lang="parsers.py">def interpret(payload, fields):
-    out = {}
-    for f in fields:
-        t, off = f[&#x27;type&#x27;], f[&#x27;offset&#x27;]
-        if t == &#x27;u8&#x27;:
-            val = payload[off]
-        else:
-            val = struct.unpack(_TYPE_FMT[t],
-                  payload[off:off + _TYPE_SIZE[t]])[0]
-            if f.get(&#x27;int&#x27;):   val = round(val)
-            elif &#x27;round&#x27; in f: val = round(val, f[&#x27;round&#x27;])
-        out[f[&#x27;name&#x27;]] = val
-    return out</pre></div><div class="desc"><div><b>스키마</b><ul><li>기종마다 이름 · 오프셋 · 타입만 적는다</li><li>닮은 기종은 fields_ref 로 빌려 쓴다</li></ul></div><div><b>파서</b><ul><li>기종을 모르는 루프 하나 — 선언대로 잘라 읽는다</li><li>little-endian 고정 · 표시 정밀도는 round</li></ul></div><div><b>안전장치</b><ul><li>기동 때 마지막 필드 끝 = packet_size 검사</li><li>cmd 는 타입 교차 확인용 — 어긋나면 버린다</li></ul></div><div><b>브라우저</b><ul><li>같은 JSON 을 /api/config 로 받아 같은 루프 + 기종별 shape()</li></ul></div></div></div>
+  <h2>바이트에서 필드로</h2>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 430" role="img" aria-label="30바이트 패킷의 오프셋이 JSON 필드 선언을 거쳐 결과 값으로 바뀌는 그림"><defs><marker id="p1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="16" class="s">hunter 패킷 30바이트</text><rect class="seg k2" x="10" y="24" width="18" height="34" rx="4"/><text x="19" y="46" class="s" text-anchor="middle">c</text><rect class="seg k2" x="28" y="24" width="18" height="34" rx="4"/><text x="37" y="46" class="s" text-anchor="middle">r</text><rect class="seg k2" x="46" y="24" width="18" height="34" rx="4"/><text x="55" y="46" class="s" text-anchor="middle">m</text><rect class="seg k2" x="64" y="24" width="144" height="34" rx="4"/><text x="136" y="46" class="r" text-anchor="middle">pos_x</text><rect class="seg k2" x="208" y="24" width="144" height="34" rx="4"/><text x="280" y="46" class="r" text-anchor="middle">pos_y</text><rect class="seg k2" x="352" y="24" width="144" height="34" rx="4"/><text x="424" y="46" class="r" text-anchor="middle">yaw</text><rect class="seg k2" x="496" y="24" width="18" height="34" rx="4"/><text x="505" y="46" class="s" text-anchor="middle">g</text><rect class="seg k2" x="514" y="24" width="18" height="34" rx="4"/><text x="523" y="46" class="s" text-anchor="middle">s</text><rect class="seg k2" x="532" y="24" width="18" height="34" rx="4"/><text x="541" y="46" class="s" text-anchor="middle">e</text><text x="19" y="74" class="s" text-anchor="middle">0</text><text x="73" y="74" class="s" text-anchor="middle">3</text><text x="217" y="74" class="s" text-anchor="middle">11</text><text x="361" y="74" class="s" text-anchor="middle">19</text><text x="505" y="74" class="s" text-anchor="middle">27</text><text x="541" y="74" class="s" text-anchor="middle">29</text><path class="ln" d="M170,80 V96" marker-end="url(#p1)"/><rect class="b k" x="10" y="100" width="320" height="228" rx="9"/><text x="24" y="126" class="t">robots.json · fields</text><text x="24" y="152" class="s">2 · u8 → mos_id</text><text x="24" y="177" class="s">3 · f64 · round 6 → pos_x</text><text x="24" y="202" class="s">11 · f64 · round 6 → pos_y</text><text x="24" y="227" class="s">19 · f64 · round 2 → yaw</text><text x="24" y="252" class="s">27 · u8 → goal_arrived</text><text x="24" y="277" class="s">28 · u8 → robot_state</text><text x="24" y="302" class="s">29 · u8 → error</text><path class="ln" d="M330,214 H356" marker-end="url(#p1)"/><rect class="b" x="360" y="100" width="190" height="228" rx="9"/><text x="374" y="126" class="t">interpret() →</text><text x="374" y="148" class="s">mos_id</text><text x="374" y="167" class="s">pos_x · pos_y</text><text x="374" y="186" class="s">yaw</text><text x="374" y="205" class="s">goal_arrived</text><text x="374" y="224" class="s">robot_state</text><text x="374" y="243" class="s">error</text><rect class="b" x="10" y="348" width="540" height="66" rx="9"/><text x="24" y="374" class="t">같은 JSON 을 서버 · 브라우저가 읽는다</text><text x="24" y="396" class="s">기종을 모르는 루프 하나 · little-endian · 선언 밖 바이트는 무시</text></svg></div></div><div class="desc"><div><b>스키마</b><ul><li>기종마다 이름 · 오프셋 · 타입만 적는다</li><li>닮은 기종은 fields_ref 로 빌려 쓴다</li></ul></div><div><b>파서</b><ul><li>기종을 모르는 루프 하나 — 선언대로 잘라 읽는다</li><li>little-endian 고정 · 표시 정밀도는 round</li></ul></div><div><b>안전장치</b><ul><li>기동 때 마지막 필드 끝 = packet_size 검사</li><li>cmd 는 타입 교차 확인용 — 어긋나면 버린다</li></ul></div><div><b>브라우저</b><ul><li>같은 JSON 을 /api/config 로 받아 같은 루프 + 기종별 shape()</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ① 이기종 통합 · 깊이</div>
   <h2>설정을 재시작 없이 — 락 없는 빠른 길</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="parsers.py">_parsers_lock = threading.Lock()
-
-def _build_mappings():
-    global _cmd_set, _type_cmd_packet, _type_fields, _parsers_mtime
-    current_mtime = (config_loader._config_mtime, config_loader._pcmds_mtime)
-    if _type_fields is not None and current_mtime == _parsers_mtime:
-        return
-    with _parsers_lock:
-        # double-check: lock 획득 사이에 다른 스레드가 이미 빌드했을 수 있음
-        if _type_fields is not None and current_mtime == _parsers_mtime:
-            return
-        type_fields = {}
-        for type_name, config in get_robot_types().items():
-            fields = _resolve_fields(type_name, robot_types)   # fields_ref
-            type_fields[type_name] = fields
-            if fields:
-                _sanity_check_fields(type_name, fields, config[&#x27;packet_size&#x27;])
-        # 완성된 dict를 한 번에 교체 (빈 dict가 노출되지 않음)
-        _type_fields = type_fields
-        _parsers_mtime = current_mtime</pre></div><div class="desc"><div><b>누가 부르나</b><ul><li>MQTT 수신 스레드와 API 스레드가 패킷마다 동시에</li></ul></div><div><b>빠른 길</b><ul><li>mtime 이 같으면 락 없이 반환 — 패킷 경로에 락 경합이 없다</li></ul></div><div><b>바뀌었을 때</b><ul><li>락 안에서 한 번 더 확인 — 두 스레드가 같이 빌드하지 않게</li><li>새 dict 를 다 만든 뒤 참조만 교체 — 읽는 쪽은 반쯤 빈 매핑을 못 본다</li></ul></div><div><b>결과</b><ul><li>관리 화면에서 스키마를 저장하면 다음 패킷부터 반영, 재시작 없음</li></ul></div><div><b>기동</b><ul><li>warm_up() 이 먼저 돌려 필드 끝 ≠ packet_size 를 로그로 잡는다</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 420" role="img" aria-label="mtime 이 같으면 락 없이 읽고, 바뀌면 락 안에서 다시 확인한 뒤 새 매핑으로 교체하는 흐름"><defs><marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="8" width="540" height="50" rx="9"/><text x="24" y="34" class="t">패킷 도착 — MQTT 스레드 · API 스레드 동시에</text><path class="ln" d="M280,58 V78" marker-end="url(#m1)"/><rect class="b k" x="140" y="82" width="280" height="50" rx="9"/><text x="154" y="108" class="t">mtime 같고 매핑 있음?</text><path class="ln" d="M140,107 H75 V166" marker-end="url(#m1)"/><text x="92" y="100" class="s">예</text><path class="ln" d="M420,107 H425 V166" marker-end="url(#m1)"/><text x="430" y="100" class="s">아니오</text><rect class="b k" x="10" y="170" width="250" height="76" rx="9"/><text x="24" y="196" class="t">락 없이 바로 읽기</text><text x="24" y="218" class="s">패킷 경로 — 경합 0</text><rect class="b" x="290" y="170" width="260" height="50" rx="9"/><text x="304" y="196" class="t">락 잡기</text><path class="ln" d="M420,220 V236" marker-end="url(#m1)"/><rect class="b" x="290" y="240" width="260" height="66" rx="9"/><text x="304" y="266" class="t">다시 확인</text><text x="304" y="288" class="s">그새 다른 스레드가 만들었으면 반환</text><path class="ln" d="M420,306 V322" marker-end="url(#m1)"/><rect class="b k" x="290" y="326" width="260" height="86" rx="9"/><text x="304" y="352" class="t">새 dict 를 다 만든 뒤</text><text x="304" y="374" class="s">참조만 한 번에 교체</text><text x="304" y="393" class="s">읽는 쪽은 옛 것 아니면 새 것</text><rect class="b" x="10" y="266" width="250" height="146" rx="9"/><text x="24" y="292" class="t">그래서</text><text x="24" y="314" class="s">관리 화면에서 스키마 저장</text><text x="24" y="333" class="s">→ 다음 패킷부터 반영</text><text x="24" y="352" class="s">→ 재시작 없음</text><text x="24" y="371" class="s">기동 때 warm_up() 이 먼저 검사</text></svg></div></div><div class="desc"><div><b>누가 부르나</b><ul><li>MQTT 수신 스레드와 API 스레드가 패킷마다 동시에</li></ul></div><div><b>빠른 길</b><ul><li>mtime 이 같으면 락 없이 반환 — 패킷 경로에 락 경합이 없다</li></ul></div><div><b>바뀌었을 때</b><ul><li>락 안에서 한 번 더 확인 — 두 스레드가 같이 빌드하지 않게</li><li>새 dict 를 다 만든 뒤 참조만 교체 — 읽는 쪽은 반쯤 빈 매핑을 못 본다</li></ul></div><div><b>결과</b><ul><li>관리 화면에서 스키마를 저장하면 다음 패킷부터 반영, 재시작 없음</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -107,58 +67,14 @@ def _build_mappings():
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ④ 태스크 할당 · 깊이</div>
-  <h2>배정 — 사본과 등록 확인</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="tasks.py">def try_allocate(store, mos, locks, positions, robot_mos,
-                 online_ids=None, errors=None, reachable=None,
-                 registered_ids=None):
-    bucket = store.unassigned.get(mos)
-    if not bucket:
-        return None
-    head = bucket[0]
-    tx, ty = float(head.params.get(&quot;x&quot;, 0.0)), float(head.params.get(&quot;y&quot;, 0.0))
-    node_index = head.params.get(&quot;node_index&quot;)
-    candidate_ids = [rid for rid, m in robot_mos.items()
-                     if m == mos and (registered_ids is None
-                                      or rid in registered_ids)]
-    chosen = _pick_nearest_available(tx, ty, candidate_ids, locks, positions,
-                                     online_ids=online_ids, errors=errors,
-                                     node_index=node_index, reachable=reachable)
-    if chosen is None:
-        return None
-    bucket.pop(0)
-    return head, chosen</pre></div><div class="desc"><div><b>머리 하나만</b><ul><li>풀 머리(최우선)만 본다 — 못 주면 뒤 태스크도 기다려 순서가 지켜진다</li></ul></div><div><b>사본</b><ul><li>robot_mos 는 MQTT 스레드가 갱신한다</li><li>원본을 돌면 dictionary changed size during iteration — 틱 시작에 뜬 사본을 넘긴다</li></ul></div><div><b>등록 확인</b><ul><li>robot_mos 는 받은 패킷이 남긴 기록이라 등록을 지워도 남는다</li><li>빼지 않으면 화면에 없는, STOP 을 누를 수 없는 로봇에 명령이 나간다</li></ul></div><div><b>후보</b><ul><li>제어권 · 오프라인 · FATAL · 도달 불가(CSV 노드 집합) 를 빼고 가장 가까운 로봇</li></ul></div></div></div>
+  <h2>배정 — 가장 가까운 가용 로봇</h2>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 420" role="img" aria-label="목표 지점 주변 로봇 중 제외 조건에 걸린 로봇을 빼고 가장 가까운 로봇을 고르는 그림"><defs><marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b" x="10" y="8" width="540" height="330" rx="10"/><path class="ln dash dim" d="M300,175 L120,80"/><path class="ln dash dim" d="M300,175 L480,70"/><path class="ln dash dim" d="M300,175 L440,285"/><path class="ln dash dim" d="M300,175 L140,285"/><path class="ln dash dim" d="M300,175 L215,95"/><path class="ln" d="M300,175 L385,205"/><circle cx="120" cy="80" r="9" class="dot dim"/><text x="134" y="85" class="hot">✕ 제어권 쥠</text><circle cx="480" cy="70" r="9" class="dot dim"/><text x="494" y="75" class="hot">✕ 30초 소식 없음</text><circle cx="440" cy="285" r="9" class="dot dim"/><text x="454" y="290" class="hot">✕ FATAL 에러</text><circle cx="140" cy="285" r="9" class="dot dim"/><text x="154" y="290" class="hot">✕ 목표에 못 감</text><circle cx="215" cy="95" r="9" class="dot dim"/><text x="229" y="100" class="hot">✕ 미등록</text><circle cx="385" cy="205" r="11" class="dot"/><text x="401" y="210" class="r">가장 가까운 가용 로봇 ✓</text><circle cx="300" cy="175" r="12" class="hotc"/><text x="250" y="211" class="t">T1 · 풀 머리</text><rect class="b" x="10" y="352" width="255" height="62" rx="9"/><text x="24" y="378" class="t">robot_mos 원본</text><text x="24" y="400" class="s">MQTT 스레드가 계속 갱신</text><path class="ln" d="M265,383 H291" marker-end="url(#g1)"/><rect class="b k" x="295" y="352" width="255" height="62" rx="9"/><text x="309" y="378" class="t">틱 시작에 뜬 사본</text><text x="309" y="400" class="s">배정은 사본으로만 돈다</text></svg></div></div><div class="desc"><div><b>머리 하나만</b><ul><li>풀 머리(최우선)만 본다 — 못 주면 뒤 태스크도 기다려 순서가 지켜진다</li></ul></div><div><b>빼는 로봇</b><ul><li>제어권 · 30초 무소식 · FATAL · 도달 불가(CSV 노드 집합) · 미등록</li></ul></div><div><b>미등록까지 보는 까닭</b><ul><li>받은 패킷 기록은 등록을 지워도 남는다 — 화면에 없어 STOP 을 못 누르는 로봇에 명령이 나가지 않게</li></ul></div><div><b>사본</b><ul><li>MQTT 스레드가 바꾸는 원본을 돌면 dictionary changed size during iteration — 틱 시작에 뜬 사본을 쓴다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ④ 태스크 할당 · 깊이</div>
   <h2>1초 틱 — 락 안에서 결정, 밖에서 발행</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="routes/tasks.py">def tick_tasks() -&gt; None:
-    positions = _snapshot_positions()
-    online = _online_ids(now)
-    errors = _snapshot_errors()
-    to_publish = []    # (robot_id, task_id, cmd_type, params, ...)
-    closed_after = []  # (Task, status, reason, robot_id) — mutex 밖 audit
-
-    with mutex:
-        # 1) lock 사라진 로봇 큐 회수
-        for rid in list(TASK_STORE.by_robot.keys()):
-            if TASK_STORE.active(rid) and locks.get(rid) is None:
-                for t in TASK_STORE.cancel_all_for_robot(rid):
-                    closed_after.append((t, &quot;FAILED&quot;, &quot;lock_lost&quot;, rid))
-        # 2) 할당 타임아웃  3) 만료 회수  4) 배정  5) 디스패치
-        ...
-            to_publish.append((rid, task.task_id, task.cmd_type, task.params, ...))
-
-    # mutex 밖: audit + publish
-    for t, status, reason, rid in closed_after:
-        _close(t, status, reason, robot_id=rid)
-    for rid, task_id, cmd_type, params, username, tracked in to_publish:
-        try:
-            _state[&quot;publish&quot;](_pub_topic(rid),
-                              build_command_packet(cmd_type, params, get_cmd, rid))
-        except Exception:
-            with mutex:
-                t = TASK_STORE.find(task_id)   # 실패 → 되돌린다</pre></div><div class="desc"><div><b>두 단계</b><ul><li>락 안에서는 상태 전이만 정하고 목록에 담는다</li><li>감사 기록 · MQTT 발행은 락을 놓은 뒤</li></ul></div><div><b>까닭</b><ul><li>브로커나 디스크가 느려도 제어권 · API 요청이 같은 락에 묶여 멈추지 않게</li></ul></div><div><b>입력은 사본</b><ul><li>위치 · 온라인 · 에러를 틱 시작에 떠서 판단 중에 바뀌지 않는다</li></ul></div><div><b>실패</b><ul><li>발행이 실패하면 락을 다시 잡고 그 태스크를 되돌린다</li></ul></div><div><b>만료는 완료가 아니다</b><ul><li>도착 확인 없이 제어권만 끊긴 것 — FAILED(lock_lost) 로 닫는다</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 340" role="img" aria-label="1초 틱을 사본, 락 안 결정, 락 밖 발행, 재전송 구간으로 나누고 API 요청이 기다리는 구간을 보인 타임라인"><defs><marker id="g2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="30" class="t">1초 틱</text><text x="10" y="186" class="t">API 요청</text><rect class="seg" x="110" y="10" width="60" height="40" rx="4"/><text x="140" y="35" class="s" text-anchor="middle">사본</text><rect class="seg k2" x="170" y="10" width="200" height="40" rx="4"/><text x="270" y="35" class="r" text-anchor="middle">락 안 — 결정만</text><rect class="seg" x="370" y="10" width="110" height="40" rx="4"/><text x="425" y="35" class="s" text-anchor="middle">감사 · 발행</text><rect class="seg" x="480" y="10" width="70" height="40" rx="4"/><text x="515" y="35" class="s" text-anchor="middle">재전송</text><text x="178" y="76" class="s">① 락 잃은 큐 회수</text><text x="178" y="96" class="s">② 배정 타임아웃</text><text x="178" y="116" class="s">③ 제어권 만료 회수</text><text x="178" y="136" class="s">④ 배정</text><text x="178" y="156" class="s">⑤ 발행 대상 → to_publish</text><path class="ln dash" d="M110,160 H550"/><rect class="seg dash" x="250" y="166" width="120" height="34" rx="4"/><text x="310" y="188" class="s" text-anchor="middle">잠깐 기다림</text><rect class="seg k2" x="370" y="166" width="70" height="34" rx="4"/><text x="405" y="188" class="s" text-anchor="middle">처리</text><text x="110" y="226" class="s">네트워크 · 디스크 I/O 는 락 밖 — 요청은 결정 시간만큼만 기다린다</text><rect class="b" x="10" y="248" width="265" height="80" rx="9"/><text x="24" y="274" class="t">발행 실패</text><text x="24" y="296" class="s">락을 다시 잡고</text><text x="24" y="315" class="s">그 태스크를 되돌린다</text><rect class="b" x="285" y="248" width="265" height="80" rx="9"/><text x="299" y="274" class="t">제어권 만료 회수</text><text x="299" y="296" class="s">도착 확인 없이 끊긴 것</text><text x="299" y="315" class="s">→ FAILED(lock_lost)</text></svg></div></div><div class="desc"><div><b>두 단계</b><ul><li>락 안에서는 상태 전이만 정하고 목록에 담는다</li><li>감사 기록 · MQTT 발행은 락을 놓은 뒤</li></ul></div><div><b>까닭</b><ul><li>브로커나 디스크가 느려도 제어권 · API 요청이 같은 락에 묶여 멈추지 않게</li></ul></div><div><b>입력은 사본</b><ul><li>위치 · 온라인 · 에러를 틱 시작에 떠서 판단 중에 바뀌지 않는다</li></ul></div><div><b>같은 반복</b><ul><li>틱 뒤에 retry_tick 이 이어 돈다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -170,89 +86,19 @@ def _build_mappings():
 <section class="slide"><div class="card">
   <div class="kicker">경력 ④ 명령 ACK · 깊이</div>
   <h2>취소는 지우지 않고 멈춘다</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="ack_retry.py">SUPERSEDING_NAMES = (&#x27;CANCEL&#x27;, &#x27;STOP&#x27;)
-
-def register_pending(robot_id, topic, payload, intent=None, task_id=None,
-                     actor=None, session_id=None, supersede=None):
-    if not payload or payload[0] not in _ack_tracked_cmds():
-        return
-    cmd = payload[0]
-    if supersede is None:
-        supersede = cmd in _superseding_cmds()
-    with state.CMD_ACK_MUTEX:
-        by_cmd = state.ROBOT_ACK_PENDING.setdefault(robot_id, {})
-        if supersede:
-            for other, e in by_cmd.items():
-                if other == cmd or e.get(&#x27;gave_up&#x27;):
-                    continue
-                e[&#x27;gave_up&#x27;] = True
-                e[&#x27;gave_up_at&#x27;] = now.isoformat()
-        by_cmd[cmd] = {
-            &#x27;topic&#x27;: topic, &#x27;payload&#x27;: payload, &#x27;cmd&#x27;: cmd,
-            &#x27;intent&#x27;: intent, &#x27;task_id&#x27;: task_id, &#x27;session_id&#x27;: session_id,
-            &#x27;retries&#x27;: 0,
-            &#x27;max_retries&#x27;: MAX_RETRIES_LONG if cmd in _long_wait_cmds()
-                           else MAX_RETRIES,
-            &#x27;gave_up&#x27;: False, &#x27;gave_up_at&#x27;: None,
-        }</pre></div><div class="desc"><div><b>키</b><ul><li>로봇 × 명령 — 늦게 온 이동 ACK 가 취소의 추적을 덮어쓰지 못한다</li></ul></div><div><b>취소 · 정지</b><ul><li>같은 로봇의 다른 재전송을 멈춘다 — 안 멈추면 묵은 MOVE_POS 가 다시 나가 멈춘 로봇이 재출발</li></ul></div><div><b>지우지 않는 까닭</b><ul><li>항목의 intent 가 CANCEL_ACK 를 받았을 때 큐를 정리하는 근거 — 지우면 취소 직후 정지에서 큐가 RUNNING 으로 남는다</li></ul></div><div><b>락 순서</b><ul><li>발행 경로는 LOCK_MUTEX 를 놓고 CMD_ACK_MUTEX 를 잡는다 — 미배달 알림은 CMD_ACK_MUTEX 를 놓은 뒤 불러 역전 데드락을 막는다</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 400" role="img" aria-label="로봇당 칸 하나일 때 늦은 ACK 가 취소 추적을 지워 재출발하던 흐름과, 로봇과 명령별 칸으로 나눈 뒤의 흐름"><defs><marker id="k1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="16" class="hot">Before — 로봇당 추적 칸 하나</text><rect class="b" x="10" y="24" width="126" height="84" rx="9"/><text x="24" y="50" class="t">MOVE 발행</text><text x="24" y="72" class="s">칸 = MOVE</text><path class="ln" d="M136,66 H144" marker-end="url(#k1)"/><rect class="b" x="148" y="24" width="126" height="84" rx="9"/><text x="162" y="50" class="t">CANCEL 발행</text><text x="162" y="72" class="s">칸 = CANCEL</text><path class="ln" d="M274,66 H282" marker-end="url(#k1)"/><rect class="b" x="286" y="24" width="126" height="84" rx="9"/><text x="300" y="50" class="t">늦은 MOVE ACK</text><text x="300" y="72" class="s">칸을 비움</text><path class="ln" d="M412,66 H420" marker-end="url(#k1)"/><rect class="b" x="424" y="24" width="126" height="84" rx="9"/><text x="438" y="50" class="t">취소 추적 사라짐</text><text x="438" y="72" class="s">재전송 MOVE 로</text><text x="438" y="91" class="s">로봇 재출발</text><text x="10" y="140" class="r">After — 로봇 × 명령</text><rect class="b k" x="10" y="150" width="260" height="150" rx="9"/><text x="24" y="176" class="t">PENDING[로봇]</text><rect class="seg" x="24" y="190" width="232" height="42" rx="4"/><text x="34" y="208" class="t2">MOVE_POS</text><text x="34" y="225" class="s">gave_up ✓ · intent 유지</text><rect class="seg k2" x="24" y="242" width="232" height="42" rx="4"/><text x="34" y="260" class="t2">CANCEL</text><text x="34" y="277" class="s">추적 중 · 재전송</text><rect class="b" x="295" y="150" width="255" height="46" rx="9"/><text x="309" y="176" class="t">늦은 MOVE ACK → MOVE 칸만</text><rect class="b" x="295" y="204" width="255" height="46" rx="9"/><text x="309" y="230" class="t">CANCEL_ACK → 큐 정리</text><rect class="b k" x="295" y="258" width="255" height="46" rx="9"/><text x="309" y="284" class="t">재전송 없음 → 로봇 정지 유지</text><path class="ln" d="M270,225 H291" marker-end="url(#k1)"/><rect class="b" x="10" y="320" width="540" height="76" rx="9"/><text x="24" y="346" class="t">락 순서</text><text x="24" y="368" class="s">발행 경로: LOCK_MUTEX 를 놓고 → CMD_ACK_MUTEX</text><text x="24" y="387" class="s">미배달 알림: CMD_ACK_MUTEX 를 놓은 뒤 호출 → 역전 데드락 없음</text></svg></div></div><div class="desc"><div><b>키</b><ul><li>로봇 × 명령 — 늦게 온 이동 ACK 가 취소의 추적을 덮어쓰지 못한다</li></ul></div><div><b>취소 · 정지</b><ul><li>같은 로봇의 다른 재전송을 멈춘다 — 안 멈추면 묵은 MOVE_POS 가 다시 나가 멈춘 로봇이 재출발</li></ul></div><div><b>지우지 않는 까닭</b><ul><li>항목의 intent 가 CANCEL_ACK 를 받았을 때 큐를 정리하는 근거 — 지우면 취소 직후 정지에서 큐가 RUNNING 으로 남는다</li></ul></div><div><b>결과</b><ul><li>회귀 테스트 4 → 25건</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ④ 명령 ACK · 깊이</div>
   <h2>재전송 상수마다 까닭이 있다</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="ack_retry.py">RETRY_GRACE_SECONDS = 1.5
-MAX_RETRIES = 5
-MAX_RETRIES_LONG = 14        # MOVE_POS · RUN_ROUTINE
-GIVE_UP_KEEP_SECONDS = 60
-
-def retry_tick(publish_fn) -&gt; None:
-    with state.CMD_ACK_MUTEX:
-        for robot_id, by_cmd in list(state.ROBOT_ACK_PENDING.items()):
-            for cmd, pending in list(by_cmd.items()):
-                if pending.get(&#x27;gave_up&#x27;):
-                    since = pending.get(&#x27;gave_up_at&#x27;) or pending[&#x27;sent_at&#x27;]
-                    if (now - datetime.fromisoformat(since)).total_seconds() \
-                            &gt;= GIVE_UP_KEEP_SECONDS:
-                        del by_cmd[cmd]
-                    continue
-                age = (now - datetime.fromisoformat(pending[&#x27;sent_at&#x27;])).total_seconds()
-                if age &lt; RETRY_GRACE_SECONDS:
-                    continue
-                if pending[&#x27;retries&#x27;] &gt;= pending[&#x27;max_retries&#x27;]:
-                    pending[&#x27;gave_up&#x27;] = True
-                    pending[&#x27;gave_up_at&#x27;] = now.isoformat()
-                    gave_up.append((robot_id, dict(pending)))
-                    continue
-                pending[&#x27;retries&#x27;] += 1
-                to_retry.append((robot_id, pending[&#x27;topic&#x27;], pending[&#x27;payload&#x27;], cmd))
-    # 락 밖: to_retry 재발행이 먼저, gave_up 미배달 알림은 뒤에</pre></div><div class="desc"><div><b>1.5초 유예</b><ul><li>tick_tasks 직후 같은 반복에서 돈다 — 유예가 없으면 방금 보낸 명령을 수 ms 뒤 또 쏜다</li></ul></div><div><b>5회 상한</b><ul><li>오프라인 로봇에 묵은 명령을 쏘다 재접속 때 뒤늦게 실행되는 사고를 막는다</li></ul></div><div><b>이동 14회</b><ul><li>로봇은 출발까지 최대 10초 기다린 뒤 ACK — 유실까지 감안해 약 15.5초에 포기</li></ul></div><div><b>60초 보존</b><ul><li>포기 시각부터 잰다 — 무선이 느려 늦게 온 CANCEL_ACK 도 intent 를 찾는다</li></ul></div><div><b>순서</b><ul><li>재전송을 먼저, 미배달 알림(감사 로그)은 뒤에 — 한 로봇의 I/O 가 다른 로봇 재전송을 늦추지 않게</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 250" role="img" aria-label="발행 뒤 1.5초 유예, 1초 간격 재전송, 일반 명령은 6.5초 · 이동 명령은 15.5초에 포기하고 60초 보존하는 타임라인"><defs><marker id="k2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="24" class="t">일반 명령</text><path class="ln dim" d="M70,50 H550"/><rect class="seg" x="70" y="38" width="36.0" height="24" rx="4"/><text x="88.0" y="80" class="s" text-anchor="middle">유예</text><circle cx="70" cy="50" r="7" class="dot"/><circle cx="106.0" cy="50" r="4" class="dot dim"/><circle cx="130.0" cy="50" r="4" class="dot dim"/><circle cx="154.0" cy="50" r="4" class="dot dim"/><circle cx="178.0" cy="50" r="4" class="dot dim"/><circle cx="202.0" cy="50" r="4" class="dot dim"/><text x="220.0" y="56" class="hot">✕</text><text x="226.0" y="80" class="hot" text-anchor="middle">포기 6.5초</text><path class="ln dash" d="M236.0,50 H550"/><text x="240.0" y="40" class="s">60초 보존 →</text><text x="10" y="124" class="t">MOVE_POS · RUN_ROUTINE</text><path class="ln dim" d="M70,150 H550"/><rect class="seg" x="70" y="138" width="36.0" height="24" rx="4"/><text x="88.0" y="180" class="s" text-anchor="middle">유예</text><circle cx="70" cy="150" r="7" class="dot"/><circle cx="106.0" cy="150" r="4" class="dot dim"/><circle cx="130.0" cy="150" r="4" class="dot dim"/><circle cx="154.0" cy="150" r="4" class="dot dim"/><circle cx="178.0" cy="150" r="4" class="dot dim"/><circle cx="202.0" cy="150" r="4" class="dot dim"/><circle cx="226.0" cy="150" r="4" class="dot dim"/><circle cx="250.0" cy="150" r="4" class="dot dim"/><circle cx="274.0" cy="150" r="4" class="dot dim"/><circle cx="298.0" cy="150" r="4" class="dot dim"/><circle cx="322.0" cy="150" r="4" class="dot dim"/><circle cx="346.0" cy="150" r="4" class="dot dim"/><circle cx="370.0" cy="150" r="4" class="dot dim"/><circle cx="394.0" cy="150" r="4" class="dot dim"/><circle cx="418.0" cy="150" r="4" class="dot dim"/><text x="436.0" y="156" class="hot">✕</text><text x="442.0" y="180" class="hot" text-anchor="middle">포기 15.5초</text><path class="ln dash" d="M452.0,150 H550"/><text x="456.0" y="140" class="s">60초 보존 →</text><rect class="band" x="310" y="128" width="72" height="44" rx="4"/><text x="346.0" y="122" class="s" text-anchor="middle">로봇 ACK 10~13초</text><path class="ln" d="M70,210 H550"/><path class="ln" d="M70,205 V215"/><text x="70" y="232" class="s" text-anchor="middle">0초</text><path class="ln" d="M190,205 V215"/><text x="190" y="232" class="s" text-anchor="middle">5초</text><path class="ln" d="M310,205 V215"/><text x="310" y="232" class="s" text-anchor="middle">10초</text><path class="ln" d="M430,205 V215"/><text x="430" y="232" class="s" text-anchor="middle">15초</text><path class="ln" d="M550,205 V215"/><text x="550" y="232" class="s" text-anchor="middle">20초</text></svg></div></div><div class="desc"><div><b>1.5초 유예</b><ul><li>tick_tasks 직후 같은 반복에서 돈다 — 유예가 없으면 방금 보낸 명령을 수 ms 뒤 또 쏜다</li></ul></div><div><b>5회 상한</b><ul><li>오프라인 로봇에 묵은 명령을 쏘다 재접속 때 뒤늦게 실행되는 사고를 막는다</li></ul></div><div><b>이동 14회</b><ul><li>로봇은 출발까지 최대 10초 기다린 뒤 ACK — 유실까지 감안해 약 15.5초에 포기</li></ul></div><div><b>60초 보존</b><ul><li>포기 시각부터 잰다 — 무선이 느려 늦게 온 CANCEL_ACK 도 intent 를 찾는다</li></ul></div><div><b>순서</b><ul><li>재전송을 먼저, 미배달 알림(감사 로그)은 뒤에</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ④ 제어권 · 깊이</div>
   <h2>만료 정책은 순수 함수 하나</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="tasks.py">def lock_expired(lock: dict, now: datetime) -&gt; bool:
-    if not lock:
-        return False
-    if lock.get(&quot;source&quot;) == &quot;user_call&quot;:
-        return is_idle(lock, now)
-    # manual 연결 기준 시각: 폴링(last_seen) &gt; 승격(promoted_at) &gt; 획득(acquired_at)
-    if lock.get(&quot;last_seen&quot;):
-        conn_at, conn_limit = lock[&quot;last_seen&quot;], MANUAL_CONN_TIMEOUT_SECONDS
-    elif lock.get(&quot;promoted_at&quot;):
-        conn_at, conn_limit = lock[&quot;promoted_at&quot;], ARRIVAL_HOLD_SECONDS
-    else:
-        conn_at, conn_limit = lock.get(&quot;acquired_at&quot;), MANUAL_CONN_TIMEOUT_SECONDS
-    if conn_at and (now - datetime.fromisoformat(conn_at)).total_seconds() &gt; conn_limit:
-        return True
-    cands = []
-    for k in (&quot;last_command_at&quot;, &quot;last_robot_active_at&quot;, &quot;last_queue_hold_at&quot;):
-        v = lock.get(k)
-        if v:
-            cands.append(datetime.fromisoformat(v))
-    if cands and (now - max(cands)).total_seconds() &gt; MANUAL_IDLE_TIMEOUT_SECONDS:
-        return True
-    return False</pre></div><div class="desc"><div><b>단일 정본</b><ul><li>클라이언트 타이머 넷이 따로 내던 판정을 서버 함수 하나로 — 요청 경로와 1초 틱이 같은 함수를 부른다</li></ul></div><div><b>두 갈래</b><ul><li>워치 호출: 폴링하는 사람이 없어 활동성만</li><li>수동: 연결(30초) 또는 활동(180초)</li></ul></div><div><b>기준 시각 순서</b><ul><li>폴링 > 승격 > 획득 — 승격을 건너뛰면 30초 넘게 달린 호출이 도착하자마자 만료된다</li></ul></div><div><b>신호 구분</b><ul><li>텔레메트리는 활동 신호일 뿐 연결 신호가 아니다</li></ul></div><div><b>테스트</b><ul><li>시각을 인자로 받는 순수 함수라 시간을 넣어 검증한다</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 415" role="img" aria-label="제어권 만료 판정 트리 — 워치 호출은 활동만, 수동은 연결 기준 시각과 활동 시간으로 판정"><defs><marker id="x1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="b k" x="10" y="8" width="540" height="44" rx="9"/><text x="24" y="34" class="t">lock_expired(lock, now)</text><path class="ln" d="M280,52 V70" marker-end="url(#x1)"/><rect class="b" x="150" y="74" width="260" height="44" rx="9"/><text x="164" y="100" class="t">워치 호출로 잡은 제어권?</text><path class="ln" d="M150,96 H110 V146" marker-end="url(#x1)"/><text x="118" y="90" class="s">예</text><path class="ln" d="M410,96 H395 V146" marker-end="url(#x1)"/><text x="418" y="90" class="s">아니오 · 수동</text><rect class="b" x="10" y="150" width="200" height="70" rx="9"/><text x="24" y="176" class="t">활동만 본다</text><text x="24" y="198" class="s">60초 조용하면 만료</text><rect class="b k" x="240" y="150" width="310" height="100" rx="9"/><text x="254" y="176" class="t">연결 기준 시각</text><text x="254" y="198" class="s">last_seen 있으면 → 30초</text><text x="254" y="217" class="s">promoted_at 이면 → 15초</text><text x="254" y="236" class="s">아니면 acquired_at → 30초</text><path class="ln" d="M395,250 V266" marker-end="url(#x1)"/><rect class="b" x="240" y="270" width="310" height="66" rx="9"/><text x="254" y="296" class="t">활동 — 명령 · 움직임 · 큐 보류</text><text x="254" y="318" class="s">180초 넘으면 만료</text><path class="ln" d="M395,336 V352" marker-end="url(#x1)"/><rect class="b" x="240" y="356" width="310" height="50" rx="9"/><text x="254" y="382" class="t">둘 다 아니면 유지</text><rect class="b" x="10" y="240" width="200" height="166" rx="9"/><text x="24" y="266" class="t">부르는 곳</text><text x="24" y="288" class="s">제어 요청 경로</text><text x="24" y="307" class="s">1초 틱</text><text x="24" y="326" class="s">→ 같은 함수 하나</text><text x="24" y="345" class="s"></text><text x="24" y="364" class="s">시각을 인자로 받아</text><text x="24" y="383" class="s">테스트에 시간을 넣는다</text></svg></div></div><div class="desc"><div><b>단일 정본</b><ul><li>클라이언트 타이머 넷이 따로 내던 판정을 서버 함수 하나로</li></ul></div><div><b>기준 시각 순서</b><ul><li>폴링 > 승격 > 획득 — 승격을 건너뛰면 30초 넘게 달린 호출이 도착하자마자 만료된다</li></ul></div><div><b>신호 구분</b><ul><li>텔레메트리는 활동 신호일 뿐 연결 신호가 아니다</li></ul></div><div><b>결과</b><ul><li>먼 길 가던 작업이 도중에 끊기지 않는다 · 오래된 락 지적 2건이 구조로 사라졌다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -264,19 +110,7 @@ def retry_tick(publish_fn) -&gt; None:
 <section class="slide"><div class="card">
   <div class="kicker">경력 ② 맵 에디터 · 구현</div>
   <h2>참조 비교 diff</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="gpsMapDiff.js">export function diffByKey(prev, next, keyFn) {
-  const prevByKey = new Map(prev.map(r =&gt; [keyFn(r), r]));
-  const nextKeys = new Set(), added = [], updated = [];
-  for (const row of next) {
-    const key = keyFn(row); nextKeys.add(key);
-    const old = prevByKey.get(key);
-    if (old === undefined) added.push(row);
-    else if (old !== row)  updated.push(row); // 참조가 다르면 바뀐 것
-  }
-  const removed = [...prevByKey.keys()]
-    .filter(k =&gt; !nextKeys.has(k));
-  return { added, updated, removed };
-}</pre></div><div class="desc"><div><b>측정 · 스테이징 longtask · 같은 절차로 전후</b></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 365" role="img" aria-label="이전 행과 다음 행을 키로 맞춰 같은 참조는 건너뛰고 바뀐 것만 다시 그리는 그림"><defs><marker id="q1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="22" class="r">prev</text><text x="300" y="22" class="r">next</text><rect class="b" x="10" y="34" width="120" height="46" rx="9"/><text x="24" y="60" class="t">A</text><rect class="b" x="10" y="96" width="120" height="46" rx="9"/><text x="24" y="122" class="t">B</text><rect class="b" x="10" y="158" width="120" height="46" rx="9"/><text x="24" y="184" class="t">C</text><rect class="b" x="10" y="220" width="120" height="46" rx="9"/><text x="24" y="246" class="t">D</text><rect class="b" x="300" y="34" width="120" height="46" rx="9"/><text x="314" y="60" class="t">A</text><rect class="b k" x="300" y="96" width="120" height="46" rx="9"/><text x="314" y="122" class="t">B′</text><rect class="b" x="300" y="158" width="120" height="46" rx="9"/><text x="314" y="184" class="t">D</text><rect class="b k" x="300" y="220" width="120" height="46" rx="9"/><text x="314" y="246" class="t">E</text><path class="ln" d="M130,57 H300"/><text x="150" y="50" class="s">같은 참조</text><path class="ln hotl" d="M130,119 H300"/><text x="150" y="112" class="hot">참조 다름</text><path class="ln" d="M130,243 C220,243 210,181 300,181"/><text x="140" y="266" class="s">같은 참조</text><text x="140" y="186" class="hot">→ removed · 지움</text><text x="440" y="63" class="s">건너뜀</text><text x="440" y="125" class="hot">updated · 다시</text><text x="440" y="187" class="s">건너뜀</text><text x="440" y="249" class="hot">added · 새로</text><rect class="b" x="10" y="300" width="540" height="56" rx="9"/><text x="24" y="326" class="t">값이 아니라 참조를 비교한다</text><text x="24" y="348" class="s">그래서 행을 고치는 코드는 늘 새 객체를 만든다 — 규칙을 주석으로 박았다</text></svg></div></div><div class="desc"><div><b>측정 · 스테이징 longtask · 같은 절차로 전후</b></div>
 <table class="perf"><thead><tr><th>조작</th><th>전</th><th>후</th></tr></thead><tbody>
 <tr><td>마커 클릭</td><td>13.4초</td><td>0ms</td></tr>
 <tr><td>행 클릭</td><td>13.3초</td><td><b>186ms</b></td></tr>
@@ -284,39 +118,13 @@ def retry_tick(publish_fn) -&gt; None:
 <tr><td>undo</td><td>13.6초</td><td>0ms</td></tr>
 <tr><td>관제 지도 경로 끄기</td><td>11.4초</td><td>0ms</td></tr>
 </tbody></table>
-<div><b>왜 참조인가</b><ul><li>값 비교는 4,800개를 매번 훑는다 — 참조 비교는 바뀐 행만 걸린다</li><li>그래서 행을 고치는 코드는 모두 새 객체를 만든다 — 규칙을 주석으로 박았다</li></ul></div></div></div>
+<div><b>왜 참조인가</b><ul><li>값 비교는 4,800개를 매번 훑는다 — 참조 비교는 바뀐 행만 걸린다</li><li>diffByKey 는 순수 함수 — vitest 11 로 고정</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
   <div class="kicker">경력 ② 맵 에디터 · 깊이</div>
   <h2>프레임 예산 + 세대 토큰</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="GPSEditorMapView.jsx">const BUILD_SYNC_THRESHOLD = 200;
-const BUILD_FRAME_BUDGET_MS = 12;
-const pumpBuildQueue = () =&gt; {
-  buildScheduledRef.current = false;
-  const q = buildQueueRef.current;
-  const deadline = performance.now() + BUILD_FRAME_BUDGET_MS;
-  while (q.length &amp;&amp; performance.now() &lt; deadline) q.shift()();
-  if (q.length &amp;&amp; !buildScheduledRef.current) {
-    buildScheduledRef.current = true;
-    requestAnimationFrame(pumpBuildQueue);
-  }
-};
-
-// waypoint effect
-const { added, removed, updated } =
-  diffByKey(prevWaypointsRef.current, waypoints, r =&gt; r.nodeIndex);
-const gen = ++wpGenRef.current;
-removed.forEach(destroyWpMarker);
-const toCreate = [...updated, ...added];
-if (toCreate.length &lt;= BUILD_SYNC_THRESHOLD) {
-  toCreate.forEach(createWpMarker);
-} else {
-  enqueueBuild(toCreate.map(wp =&gt; () =&gt; {
-    if (gen !== wpGenRef.current || markersRef.current.has(wp.nodeIndex)) return;
-    createWpMarker(wp);
-  }));
-}</pre></div><div class="desc"><div><b>200개 이하</b><ul><li>그 자리에서 만든다 — 평소 편집은 즉시</li></ul></div><div><b>넘으면</b><ul><li>프레임마다 12ms 만 쓰고 다음 프레임으로 — 16.7ms 프레임 안에 입력 · 그리기 여유를 남긴다</li></ul></div><div><b>세대 토큰</b><ul><li>생성 도중 데이터가 바뀌면 effect 가 다시 돌며 세대를 올린다 — 옛 작업은 스스로 빠져 유령 · 중복 마커가 없다</li></ul></div><div><b>안전장치</b><ul><li>레지스트리에 이미 있으면 건너뛴다</li><li>언마운트 때 남은 큐를 버린다</li><li>큐가 비면 마커 수와 데이터를 대조해 어긋나면 경고</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 390" role="img" aria-label="프레임마다 12ms 만 생성에 쓰고, 데이터가 바뀌면 세대가 올라 옛 작업이 건너뛰어지는 그림"><defs><marker id="f9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><rect class="seg k2" x="10" y="30" width="63" height="44" rx="4"/><rect class="seg" x="73" y="30" width="25" height="44" rx="4"/><text x="54.0" y="22" class="s" text-anchor="middle">프레임 1</text><rect class="seg k2" x="98" y="30" width="63" height="44" rx="4"/><rect class="seg" x="161" y="30" width="25" height="44" rx="4"/><text x="142.0" y="22" class="s" text-anchor="middle">프레임 2</text><rect class="seg k2" x="186" y="30" width="63" height="44" rx="4"/><rect class="seg" x="249" y="30" width="25" height="44" rx="4"/><text x="230.0" y="22" class="s" text-anchor="middle">프레임 3</text><rect class="seg k2" x="274" y="30" width="63" height="44" rx="4"/><rect class="seg" x="337" y="30" width="25" height="44" rx="4"/><text x="318.0" y="22" class="s" text-anchor="middle">프레임 4</text><rect class="seg k2" x="362" y="30" width="63" height="44" rx="4"/><rect class="seg" x="425" y="30" width="25" height="44" rx="4"/><text x="406.0" y="22" class="s" text-anchor="middle">프레임 5</text><rect class="seg k2" x="450" y="30" width="63" height="44" rx="4"/><rect class="seg" x="513" y="30" width="25" height="44" rx="4"/><text x="494.0" y="22" class="s" text-anchor="middle">프레임 6</text><text x="10" y="96" class="r">■ 생성 12ms</text><text x="130" y="96" class="s">□ 입력 · 그리기 4.7ms</text><text x="10" y="130" class="t">생성 큐</text><rect class="seg" x="10" y="140" width="32" height="30" rx="4"/><rect class="seg" x="48" y="140" width="32" height="30" rx="4"/><rect class="seg" x="86" y="140" width="32" height="30" rx="4"/><rect class="seg" x="124" y="140" width="32" height="30" rx="4"/><rect class="seg" x="162" y="140" width="32" height="30" rx="4"/><rect class="seg" x="200" y="140" width="32" height="30" rx="4"/><rect class="seg dim" x="238" y="140" width="32" height="30" rx="4"/><rect class="seg dim" x="276" y="140" width="32" height="30" rx="4"/><rect class="seg dim" x="314" y="140" width="32" height="30" rx="4"/><rect class="seg dim" x="352" y="140" width="32" height="30" rx="4"/><rect class="seg k2" x="390" y="140" width="32" height="30" rx="4"/><rect class="seg k2" x="428" y="140" width="32" height="30" rx="4"/><rect class="seg k2" x="466" y="140" width="32" height="30" rx="4"/><rect class="seg k2" x="504" y="140" width="32" height="30" rx="4"/><path class="ln hotl" d="M236,124 V186"/><text x="242" y="200" class="hot">데이터 변경 → 세대 1 → 2</text><text x="250" y="132" class="hot">세대 1 남은 작업 → 스스로 건너뜀</text><rect class="b" x="10" y="222" width="540" height="54" rx="9"/><text x="24" y="248" class="t">200개 이하면 그 자리에서 — 평소 편집은 즉시</text><rect class="b" x="10" y="290" width="540" height="90" rx="9"/><text x="24" y="316" class="t">안전장치</text><text x="24" y="338" class="s">레지스트리에 이미 있으면 건너뜀 · 언마운트 때 큐 폐기</text><text x="24" y="357" class="s">큐가 비면 마커 수와 데이터를 대조해 어긋나면 경고</text></svg></div></div><div class="desc"><div><b>넘으면</b><ul><li>프레임마다 12ms 만 쓰고 다음 프레임으로 — 16.7ms 안에 입력 · 그리기 여유</li></ul></div><div><b>세대 토큰</b><ul><li>생성 도중 데이터가 바뀌면 세대를 올린다 — 옛 작업은 스스로 빠져 유령 · 중복 마커가 없다</li></ul></div><div><b>결과</b><ul><li>초기 로드 14.2초 멈춤 → 0</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
@@ -334,31 +142,7 @@ if (toCreate.length &lt;= BUILD_SYNC_THRESHOLD) {
 <section class="slide"><div class="card">
   <div class="kicker">경력 ⑤ 현장 배포 · 깊이</div>
   <h2>가짜 성공 신호 셋을 진짜로</h2>
-  <div class="ad"><div class="adl"><pre class="code" data-lang="auto-deploy.sh">compose_container() {
-    docker ps -a \
-        --filter &quot;label=com.docker.compose.project=$1&quot; \
-        --filter &quot;label=com.docker.compose.service=$2&quot; \
-        --format &quot;{{.Names}}&quot; | head -1
-}
-
-$DOCKER_COMPOSE -p robot-control -f docker-compose.production.yml \
-    up -d --build 2&gt;&amp;1 | vlog
-if [ &quot;${PIPESTATUS[0]}&quot; -eq 0 ]; then
-    log &quot;[PROD]   [2/2] Build &amp; start OK&quot;
-else
-    log &quot;[PROD] &gt;&gt;&gt; DEPLOY FAILED&quot;
-    container=$(compose_container robot-control api_server all)
-    [[ -n &quot;$container&quot; ]] &amp;&amp; capture_failed_log &quot;prod&quot; &quot;$container&quot; &quot;Deploy build failed&quot;
-    return 1
-fi
-
-# api_server 준비될 때까지 최대 60초 폴링
-for _ in $(seq 1 30); do
-    http_code=$(curl -s -o /dev/null -w &quot;%{http_code}&quot; \
-                http://localhost:80/api/health)
-    [ &quot;$http_code&quot; = &quot;200&quot; ] &amp;&amp; break
-    sleep 2
-done</pre></div><div class="desc"><div><b>가짜 ① 종료 코드</b><ul><li>| vlog 파이프의 종료 코드는 로그 함수 것이라 늘 0 — PIPESTATUS[0] 로 compose 의 코드를 본다</li></ul></div><div><b>가짜 ② 헬스</b><ul><li>정적 페이지는 백엔드가 죽어도 200 — Nginx 가 넘기는 /api/health 를 찔러 죽으면 502</li></ul></div><div><b>가짜 ③ 컨테이너</b><ul><li>서버마다 이름 규칙이 달랐다 — compose 라벨로 찾는다</li></ul></div><div><b>폴링</b><ul><li>sleep 5 단발 → 2초 × 30 — 느린 기동(MQTT 연결 · CSV 로드)에 오히려 관대</li></ul></div><div><b>실패하면</b><ul><li>컨테이너 로그를 남겨 다음 사람이 바로 본다</li></ul></div></div></div>
+  <div class="ad"><div class="adl"><div class="diagram"><svg viewBox="0 0 560 410" role="img" aria-label="배포 성공 판정이 거짓이던 세 신호와 바꾼 진짜 신호의 전후"><defs><marker id="z1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs><text x="10" y="16" class="hot">전</text><text x="295" y="16" class="r">후</text><rect class="b bad" x="10" y="24" width="255" height="110" rx="9"/><text x="24" y="50" class="t">compose up | vlog</text><text x="24" y="74" class="s">compose 실패 = 1</text><text x="24" y="93" class="s">파이프 코드 = vlog 의 0</text><text x="24" y="112" class="s">→ 「DEPLOY OK」</text><path class="ln" d="M265,79 H291" marker-end="url(#z1)"/><rect class="b k" x="295" y="24" width="255" height="110" rx="9"/><text x="309" y="50" class="t">PIPESTATUS[0]</text><text x="309" y="72" class="s">compose 의 코드 1 그대로</text><text x="309" y="91" class="s">→ DEPLOY FAILED</text><rect class="b bad" x="10" y="152" width="255" height="110" rx="9"/><text x="24" y="178" class="t">정적 페이지 :81</text><text x="24" y="202" class="s">백엔드가 죽어도 200</text><text x="24" y="221" class="s">sleep 5 뒤 한 번만</text><path class="ln" d="M265,207 H291" marker-end="url(#z1)"/><rect class="b k" x="295" y="152" width="255" height="110" rx="9"/><text x="309" y="178" class="t">/api/health · Nginx 경유</text><text x="309" y="200" class="s">백엔드가 죽으면 502</text><text x="309" y="219" class="s">2초 × 30 폴링</text><rect class="b bad" x="10" y="280" width="255" height="110" rx="9"/><text x="24" y="306" class="t">컨테이너 이름</text><text x="24" y="330" class="s">서버마다 규칙이 달라</text><text x="24" y="349" class="s">로그를 못 찾음</text><path class="ln" d="M265,335 H291" marker-end="url(#z1)"/><rect class="b k" x="295" y="280" width="255" height="110" rx="9"/><text x="309" y="306" class="t">compose 라벨</text><text x="309" y="328" class="s">project · service 로 찾는다</text><text x="309" y="347" class="s">실패 로그 80줄 보관</text></svg></div></div><div class="desc"><div><b>① 종료 코드</b><ul><li>| vlog 파이프의 종료 코드는 로그 함수 것이라 늘 0 — PIPESTATUS[0] 로 compose 의 코드를 본다</li></ul></div><div><b>② 헬스</b><ul><li>정적 페이지는 백엔드가 죽어도 200 — Nginx 가 넘기는 /api/health 를 찔러 죽으면 502</li></ul></div><div><b>③ 컨테이너</b><ul><li>서버마다 이름 규칙이 달랐다 — compose 라벨로 찾는다</li></ul></div><div><b>결과</b><ul><li>빌드 실패와 영구 502 가 FAILED 로 잡힌다</li></ul></div></div></div>
   <span class="no"></span>
 </div></section>
 <section class="slide"><div class="card">
