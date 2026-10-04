@@ -26,7 +26,7 @@
   });
   document.querySelector('.bar .prev')?.addEventListener('click', () => go(cur - 1));
   document.querySelector('.bar .next')?.addEventListener('click', () => go(cur + 1));
-  // #3 처럼 번호로 들어오면 그 장부터
+  // #3 처럼 번호로 들어오면 그 장부터 — 장 안의 「자세히」 링크도 같은 길로 간다
   const n = +location.hash.slice(1);
   if (n > 0 && n <= slides.length) {
     cur = n - 1;
@@ -34,5 +34,9 @@
     slides[cur].scrollIntoView({ block: 'center' });
     document.documentElement.style.scrollBehavior = '';
   }
+  addEventListener('hashchange', () => {
+    const k = +location.hash.slice(1);
+    if (k > 0 && k <= slides.length) go(k - 1);
+  });
   show();
 })();
