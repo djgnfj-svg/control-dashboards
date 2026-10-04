@@ -217,6 +217,8 @@ h2{font-size:1.75em;line-height:1.3;margin:0 0 .6em;letter-spacing:-.015em}
 
 
 
+
+
 /* ---- 큰 구조 | 구현 방식 ---- */
 .z-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2.2em;flex:1;min-height:0}
 .z-left{min-height:0;display:flex}
@@ -233,10 +235,12 @@ h2{font-size:1.75em;line-height:1.3;margin:0 0 .6em;letter-spacing:-.015em}
 .diagram .z-chip{fill:var(--slide);stroke:var(--line);stroke-width:1.2}
 .diagram .z-chip.k{stroke:var(--acc);stroke-width:1.8}
 .diagram .z-c{fill:var(--ink);font-size:17px;font-weight:700}
-.diagram .z-cs{fill:var(--ink);font-size:13px;font-weight:700}
+.diagram .z-cs{fill:var(--ink);font-size:11.5px;font-weight:700}
 .diagram .z-p{fill:var(--sub);font-size:13.5px}
 .diagram .z-ps{fill:var(--sub);font-size:12px}
 .diagram .z-hot{fill:var(--hot);font-size:14px;font-weight:700}
+.diagram .z-chip.dash{stroke-dasharray:5 4;fill:none}
+.z-bridge{margin:auto 0 0;font-size:.72em;color:var(--sub);border-left:3px solid var(--hot);padding-left:.7em;line-height:1.5}
 .diagram .z-ln{stroke:var(--sub);stroke-width:1.6;fill:none}
 @media (max-width:760px){.z-grid{grid-template-columns:1fr}}
 
