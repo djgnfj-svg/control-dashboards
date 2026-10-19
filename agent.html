@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 에이전트 — 송영재</title>
+<meta name="description" content="송영재 — AI 에이전트 업무 자동화">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+
+<section class="slide"><div class="card cover">
+  <div class="kicker">개인 프로젝트 · 송영재</div>
+  <h1>AI 에이전트 업무 자동화</h1>
+  <p class="lead">공고 수집, 지원, 메일 정리, 사이트 로그인을 Claude 에이전트로 자동화했습니다.</p>
+  <div class="stats">
+    <div class="stat"><b>8분 → 5초</b><span>원티드 공고 수집</span></div>
+  </div>
+  <div class="stack"><span>Claude Code</span><span>MCP</span><span>Claude in Chrome</span><span>Python</span></div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">전체 구조</div>
+  <h2>/start 한 번에 에이전트 넷이 돈다</h2>
+  <div class="layers">
+    <div class="layer"><div class="n">/start</div><div>오늘 할 일을 만든다</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="n">로그인</div><div>취업 사이트 세 곳의 세션을 확인하고 다시 로그인한다</div></div>
+    <div class="layer"><div class="n">공고</div><div>공고를 모아 기준으로 거르고 후보 3건을 고른다</div></div>
+    <div class="layer"><div class="n">이력서</div><div>공고에 맞춘 이력서 PDF를 만든다</div></div>
+    <div class="layer"><div class="n">메일</div><div>Gmail · Naver 메일을 규칙대로 분류한다</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="n">사람</div><div>낼 공고는 사람이 고른다</div></div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">Project 01 · 채용 자동지원</div>
+  <h2>공고 수집부터 제출까지</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box"><b>1 · 수집</b><p>세 사이트 공고를 모아 마감 표를 만든다.</p></div>
+      <div class="box"><b>2 · 맞춤 이력서</b><p>공고와 무관한 경험을 뺀 PDF를 만든다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box"><b>3 · 결정</b><p>낼지는 사람이 고르고 결정은 로그로 남는다.</p></div>
+      <div class="box fix"><b>4 · 지원</b><p>PDF를 첨부해 제출한다. 사이트 양식을 요구하는 공고는 따로 모은다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 비용</div>
+  <h2>공고 1,200건을 매번 다시 읽었다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>원티드 수집 한 번에 API를 764번 호출했다.</p></div>
+      <div class="box"><b>원인</b><p>떨어진 공고를 기록하지 않아 매번 다시 읽었다.</p></div>
+      <div class="box fix"><b>해결</b><p>본 공고는 탈락 사유와 함께 기록하고, 기준이 바뀔 때만 다시 판정한다.</p></div>
+    </div>
+    <div class="col">
+      <p class="big">8분 → 5초<small>API 764 → 12번</small></p>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">문제 · 판정</div>
+  <h2>맞는 공고가 부수 조건에 탈락했다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>Python이 7번 나오는 공고가 「병역특례 지원 가능」 한 줄로 탈락했다. 후보 100건 중 36건은 경력 미달이었다.</p></div>
+      <div class="box"><b>원인</b><p>제목으로 후보를 잡고 부수 조건으로 뺐다. 한 사이트엔 경력 필터가 없었다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>해결</b><p>본문의 Python과 경쟁 스택 언급 수로 판정하고, 경력 필터를 세 사이트에 똑같이 건다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">설계 · 안전</div>
+  <h2>시험 중 지원서가 나가지 않게</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>위험</b><p>새 사이트를 시험하다 실제 지원서가 나갈 수 있다.</p></div>
+      <div class="box fix"><b>제출 잠금</b><p>허용한 사이트만 제출하고 나머지는 양식에서 멈춘다. Python과 Node 양쪽에서 막는다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>사람 승인</b><p>낼 공고는 사람이 고르고, 제출은 두 번 눌러야 나간다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">Project 02 · 메일 분류</div>
+  <h2>메일 권한은 메일 에이전트에게만</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box"><b>구조</b><p>IMAP을 MCP 서버로 감싸 메일 에이전트에만 연결했다.</p></div>
+      <div class="box fix"><b>병렬</b><p>20통씩 나눠 에이전트 셋이 동시에 분류한다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>실패 처리</b><p>한 묶음이라도 실패하면 확정하지 않고 다음 실행에서 다시 가져온다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">Project 03 · 브라우저 에이전트</div>
+  <h2>구글 로그인 팝업이 에이전트 밖 창으로 떴다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box bad"><b>문제</b><p>버튼이 반응 없어 보였고, 에이전트는 사람에게 로그인을 넘겼다.</p></div>
+      <div class="box"><b>원인</b><p>팝업이 별도 창으로 떴고, 잡코리아는 FedCM도 끼어들었다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>해결</b><p>클릭 직전 window.open을 새 탭 열기로 바꿔 팝업을 탭 안으로 받는다.</p></div>
+      <div class="box res"><b>결과</b><p>세 사이트 모두 사람 없이 로그인한다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">실험 · 판정 모델 JEV</div>
+  <h2>메일 판정을 판정 전용 모델과 비교했다</h2>
+  <div class="case">
+    <div class="col">
+      <div class="box"><b>실험</b><p>Claude가 지운 메일 146통을 판정 모델 JEV에 다시 판정시켰다.</p></div>
+      <p class="big">91% 일치<small>삭제 판정 133/146</small></p>
+      <p class="big">$0.004<small>146통 전체 비용</small></p>
+    </div>
+    <div class="col">
+      <div class="box fix"><b>어긋난 13통</b><p>AI 뉴스레터 3통은 JEV가 규칙대로 남겼다. 나머지는 규칙 경계의 메일이었다.</p></div>
+      <div class="box res"><b>확신도 0.7 이상만 맡기면</b><p>83%를 96.7% 일치로 처리하고 나머지만 Claude에게 넘긴다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<section class="slide"><div class="card">
+  <div class="kicker">현업 · 로봇 관제</div>
+  <h2>AI 멀티에이전트 코드 감사</h2>
+  <div class="case">
+    <div class="col">
+      <p class="big">40건 탐지 → 25건 확정<small>운영 중인 로봇 18대 관제 코드</small></p>
+      <div class="box fix"><b>방법</b><p>8개 관점으로 병렬 탐지하고, 발견마다 다른 에이전트가 반증한다.</p></div>
+    </div>
+    <div class="col">
+      <div class="box res"><b>결과</b><p>스테이징이 실로봇 브로커를 함께 쓰던 문제를 찾았다.</p></div>
+    </div>
+  </div>
+  <span class="no"></span>
+</div></section>
+
+<nav class="bar" aria-label="슬라이드"><button class="prev" aria-label="이전">←</button><span class="pos"></span><button class="next" aria-label="다음">→</button></nav>
+<script src="deck.js"></script>
+</body>
+</html>
